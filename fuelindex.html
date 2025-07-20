@@ -1,0 +1,3485 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ဆီဖြည့်သွင်းခြင်းနှင့်စာရင်းထိန်းချုပ်ရေးစနစ်</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter (for general text) and Pyidaungsu (for Burmese) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* Overall Aesthetic: Modern, Clean, Dashboard */
+        html, body {
+            height: 100%; /* Ensure html and body take full viewport height */
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', 'Pyidaungsu', sans-serif;
+            background-color: #f0f2f5; /* Light gray background for overall page */
+            color: #333; /* Darker text for readability */
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden; /* Changed to hidden to manage scrolling within main-content-wrapper */
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .burmese-font {
+            font-family: 'Pyidaungsu', sans-serif;
+        }
+
+        /* Dynamic Background (subtle, less distracting) */
+        .dynamic-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background-color: #f0f2f5;
+            background-image: radial-gradient(circle at 100% 150%, #e0e6ed, #f0f2f5 50%, #f0f2f5);
+            opacity: 0.8;
+            transition: background-color 0.3s ease, background-image 0.3s ease;
+        }
+
+        /* Sidebar Styles */
+        #sidebar {
+            width: 280px; /* Slightly wider for better readability */
+            min-width: 280px;
+            background-color: #2c3e50; /* Darker blue-gray */
+            color: #ecf0f1; /* Light text */
+            padding: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.25);
+            transition: width 0.3s ease-in-out, min-width 0.3s ease-in-out, transform 0.3s ease-in-out;
+            z-index: 20;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        #sidebar.collapsed {
+            width: 80px; /* Collapsed width */
+            min-width: 80px;
+        }
+
+        #sidebar .logo {
+            padding: 0 1.5rem 2rem 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+            white-space: nowrap; /* Prevent wrapping */
+            overflow: hidden; /* Hide overflow when collapsed */
+        }
+        #sidebar .logo .icon {
+            font-size: 2.5rem;
+            color: #27ae60; /* Emerald green */
+        }
+        #sidebar.collapsed .logo .label {
+            display: none;
+        }
+        #sidebar.collapsed .logo {
+            justify-content: center;
+            padding: 0 0.5rem 1.5rem 0.5rem;
+        }
+
+        #sidebar nav {
+            flex-grow: 1;
+        }
+
+        #sidebar .nav-group-title {
+            padding: 1rem 1.5rem 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #bdc3c7; /* Lighter gray for group titles */
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 0.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        #sidebar.collapsed .nav-group-title {
+            display: none;
+        }
+
+        #sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 0.9rem 1.5rem;
+            color: #ecf0f1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            border-left: 5px solid transparent; /* Thicker border for active state */
+            margin-bottom: 0.25rem;
+            border-radius: 0.5rem; /* Rounded corners for nav items */
+            margin: 0 1rem 0.25rem 1rem; /* Margin to make them float within sidebar */
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        #sidebar .nav-item:hover {
+            background-color: #34495e; /* Darker blue-gray on hover */
+            color: #ffffff;
+            border-left-color: #27ae60; /* Emerald green */
+        }
+        #sidebar .nav-item.active {
+            background-color: #34495e;
+            color: #ffffff;
+            border-left-color: #27ae60;
+            font-weight: 600;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.3); /* Subtle inner shadow for active */
+        }
+        #sidebar .nav-item .icon {
+            font-size: 1.4rem;
+            margin-right: 1.2rem;
+            width: 30px; /* Ensure consistent icon width */
+            text-align: center;
+        }
+        #sidebar.collapsed .nav-item .label {
+            display: none;
+        }
+        #sidebar.collapsed .nav-item {
+            justify-content: center;
+            padding: 0.9rem 0;
+            margin: 0 0.5rem 0.25rem 0.5rem;
+        }
+        #sidebar.collapsed .nav-item .icon {
+            margin-right: 0;
+        }
+
+        /* Main Content Area */
+        #main-content-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff; /* White background for main content */
+            border-radius: 1rem; /* More rounded */
+            margin: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); /* Deeper shadow */
+            overflow-y: auto; /* Enable vertical scrolling for main content */
+            z-index: 1;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Top Navigation Bar */
+        #top-navbar {
+            background-color: #ffffff;
+            padding: 1.5rem 2.5rem;
+            border-bottom: 1px solid #e0e6ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            z-index: 10;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #top-navbar .title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            transition: color 0.3s ease;
+        }
+        #top-navbar .profile-icon {
+            font-size: 2rem;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: color 0.2s ease-in-out;
+        }
+        #top-navbar .profile-icon:hover {
+            color: #27ae60;
+        }
+
+        /* Hamburger Menu Button (for mobile) */
+        #mobile-menu-button {
+            display: none;
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: #2c3e50;
+            color: #ecf0f1;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 25;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+        }
+        #mobile-menu-button:hover {
+            background-color: #34495e;
+        }
+
+        /* Content Area within Main Content */
+        #content-area-wrapper {
+            padding: 2.5rem;
+            flex-grow: 1;
+            background-color: transparent; /* Main content wrapper handles background */
+        }
+
+        /* Section Content Styles (card-based) */
+        .section-content {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* 12px */
+            padding: 2rem;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2.5rem;
+            display: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-in-out, visibility 0.4s ease-in-out;
+            pointer-events: none;
+        }
+        .section-content.active {
+            display: block;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        h1, h2, h3 {
+            color: #27ae60; /* Emerald green for headers */
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        h2 { font-size: 2rem; }
+        h3 { font-size: 1.5rem; }
+
+        /* Input Styles */
+        input[type="text"], input[type="number"], input[type="date"], select {
+            border: 1px solid #ccc;
+            border-radius: 0.5rem; /* 8px */
+            padding: 0.8rem 1.2rem;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+            color: #333;
+            transition: all 0.2s ease-in-out;
+            font-size: 1rem;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
+            border-color: #27ae60;
+            box-shadow: 0 0 0 4px rgba(39, 174, 96, 0.2);
+            outline: none;
+            background-color: #ffffff;
+        }
+        input[type="text"]:hover, input[type="number"]:hover, input[type="date"]:hover, select:hover {
+            border-color: #a0a0a0;
+        }
+        input[readonly] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            opacity: 0.9;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+        .text-red-500 {
+            color: #e74c3c;
+        }
+
+        /* Button Styles */
+        button {
+            padding: 0.9rem 2rem;
+            border-radius: 0.6rem; /* 10px */
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-primary {
+            background-color: #27ae60; /* Emerald Green */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #229a54; /* Darker green */
+        }
+        .btn-secondary {
+            background-color: #7f8c8d; /* Medium Gray */
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #6c7a7b; /* Darker gray */
+        }
+        .btn-danger {
+            background-color: #e74c3c; /* Red */
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b; /* Darker red */
+        }
+        .btn-accent {
+            background-color: #f39c12; /* Muted Orange */
+            color: white;
+        }
+        .btn-accent:hover {
+            background-color: #e67e22; /* Darker Orange */
+        }
+        .btn-fresh-green { /* Not used in new palette directly, but kept for reference */
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-fresh-green:hover {
+            background-color: #388E3C;
+        }
+        .btn-blue { /* Not used in new palette directly, but kept for reference */
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-blue:hover {
+            background-color: #1976D2;
+        }
+
+        /* Table Styles */
+        .table-header th {
+            background-color: #ecf0f1; /* Light gray header */
+            color: #333;
+            padding: 1rem 1.2rem;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid #bdc3c7;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+        .table-row td {
+            padding: 0.9rem 1.2rem;
+            border-bottom: 1px solid #e0e6ed;
+            color: #555;
+        }
+        .table-row:nth-child(odd) {
+            background-color: #fcfcfc;
+        }
+        .table-row:nth-child(even) {
+            background-color: #ffffff;
+        }
+        .table-row:hover {
+            background-color: #f5f7f9;
+            cursor: pointer;
+        }
+        .table-row.selected-row {
+            background-color: #dbeafe; /* Light blue for selected */
+            font-weight: 500;
+            color: #1e40af;
+        }
+        .table-container {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            overflow-x: auto; /* Allow horizontal scrolling for tables */
+            overflow-y: auto; /* Allow vertical scrolling for tables */
+            max-height: 450px; /* Slightly taller tables */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e0e6ed;
+        }
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        /* Report Tabs Styling */
+        .tab-button {
+            border-bottom-width: 3px;
+            padding-bottom: 0.8rem;
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: #7f8c8d;
+            border-color: transparent;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button:hover {
+            color: #27ae60;
+            border-color: #27ae60;
+        }
+        .tab-button.active-tab {
+            color: #27ae60; /* Emerald Green for active tab */
+            border-color: #27ae60;
+            font-weight: 700;
+        }
+        .report-tab-content {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            padding: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Theme Toggle (floating button) */
+        #theme-toggle {
+            position: fixed;
+            bottom: 2.5rem;
+            right: 2.5rem;
+            background-color: #34495e; /* Darker blue-gray */
+            color: #ecf0f1;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            z-index: 50;
+        }
+        #theme-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .day-mode-active {
+            background-color: #27ae60 !important; /* Emerald Green for day mode */
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.6) !important;
+        }
+        .night-mode-active {
+            background-color: #f39c12 !important; /* Muted Orange for night mode */
+            color: #2c3e50 !important;
+            box-shadow: 0 0 10px rgba(243, 156, 18, 0.6) !important;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                overflow-y: auto; /* Allow body scroll on mobile */
+            }
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 280px;
+                transform: translateX(-100%);
+                box-shadow: 6px 0 20px rgba(0, 0, 0, 0.4);
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+            #mobile-menu-button {
+                display: block;
+            }
+            #main-content-wrapper {
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                padding-top: 5rem; /* Space for fixed top bar */
+            }
+            #top-navbar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                box-sizing: border-box;
+                padding: 1rem 1.5rem;
+                border-radius: 0;
+            }
+            #content-area-wrapper {
+                padding: 1.5rem;
+            }
+            #sidebar .logo {
+                justify-content: flex-start;
+            }
+            #sidebar.collapsed {
+                width: 0;
+                min-width: 0;
+            }
+            #sidebar.collapsed .nav-item .label {
+                display: none;
+            }
+            #theme-toggle {
+                bottom: 1.5rem;
+                right: 1.5rem;
+                width: 52px;
+                height: 52px;
+                font-size: 1.4rem;
+            }
+        }
+
+        /* Loading Overlay Styles (with skeleton loader concept) */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 1.3rem;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: opacity 0.4s ease-in-out;
+            pointer-events: none;
+        }
+        #loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        #loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #27ae60; /* Emerald green spinner */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Skeleton Loader Placeholder */
+        .skeleton-loader {
+            background-color: #e0e6ed; /* Light gray for skeleton */
+            animation: pulse 1.5s infinite ease-in-out;
+            border-radius: 6px;
+        }
+        .dark .skeleton-loader {
+            background-color: #4a5568; /* Darker gray for dark mode skeleton */
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .skeleton-text {
+            height: 1.1em;
+            margin-bottom: 0.6em;
+        }
+        .skeleton-row {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            padding: 0.9rem 1.2rem;
+            border-bottom: 1px solid #e0e6ed;
+        }
+        .skeleton-row .skeleton-cell {
+            flex: 1;
+            height: 1.3em;
+        }
+        /* Style for sortable table headers */
+        .table-header th.sortable {
+            cursor: pointer;
+            position: relative;
+        }
+        .table-header th.sortable::after {
+            content: '';
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 0.6rem;
+            vertical-align: middle;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #7f8c8d; /* Default down arrow */
+            opacity: 0.5;
+            transition: opacity 0.2s ease-in-out;
+        }
+        .table-header th.sortable:hover::after {
+            opacity: 0.9;
+        }
+        .table-header th.sortable.asc::after {
+            border-top: 0;
+            border-bottom: 5px solid #27ae60; /* Up arrow for ASC */
+            opacity: 1;
+        }
+        .table-header th.sortable.desc::after {
+            border-top: 5px solid #27ae60; /* Down arrow for DESC */
+            opacity: 1;
+        }
+
+        /* Dashboard specific styles for cards */
+        .dashboard-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        .dashboard-card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .dashboard-card-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #333;
+        }
+        .dashboard-card-icon {
+            font-size: 3.5rem;
+            opacity: 0.6;
+        }
+
+        /* Specific card colors */
+        .card-blue .dashboard-card-icon { color: #3498db; }
+        .card-red .dashboard-card-icon { color: #e74c3c; }
+        .card-green .dashboard-card-icon { color: #27ae60; }
+        .card-purple .dashboard-card-icon { color: #9b59b6; }
+        .card-orange .dashboard-card-icon { color: #f39c12; }
+
+
+        /* Custom Message Box Styles */
+        .message-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .message-modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .message-modal {
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .message-modal-overlay.visible .message-modal {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .message-modal h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #333;
+        }
+        .message-modal p {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+        .message-modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .message-modal .btn {
+            padding: 0.8rem 1.8rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .message-modal .btn-success {
+            background-color: #27ae60;
+            color: white;
+        }
+        .message-modal .btn-success:hover {
+            background-color: #229a54;
+        }
+        .message-modal .btn-error {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .message-modal .btn-error:hover {
+            background-color: #c0392b;
+        }
+        .message-modal .btn-info {
+            background-color: #3498db;
+            color: white;
+        }
+        .message-modal .btn-info:hover {
+            background-color: #2980b9;
+        }
+        .message-modal .btn-confirm {
+            background-color: #f39c12;
+            color: white;
+        }
+        .message-modal .btn-confirm:hover {
+            background-color: #e67e22;
+        }
+        .message-modal .btn-cancel {
+            background-color: #bdc3c7;
+            color: white;
+        }
+        .message-modal .btn-cancel:hover {
+            background-color: #95a5a6;
+        }
+
+        /* Dark mode adjustments for message box */
+        body.dark .message-modal {
+            background: #2d3748;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        body.dark .message-modal h3 {
+            color: #e2e8f0;
+        }
+        body.dark .message-modal p {
+            color: #a0aec0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex">
+    <div class="dynamic-bg"></div> <!-- Dynamic Background -->
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-gas-pump icon"></i>
+            <span class="label burmese-font">ဆီစနစ်</span>
+        </div>
+        <nav>
+            <a href="#" class="nav-item active" onclick="showSection('dashboard-section', this)">
+                <i class="fa-solid fa-chart-line icon"></i>
+                <span class="label burmese-font">Dashboard</span>
+            </a>
+
+            <div class="nav-group-title burmese-font">စီမံခန့်ခွဲမှု</div>
+            <a href="#" class="nav-item" onclick="showSection('fuel-types-section', this)">
+                <i class="fa-solid fa-oil-can icon"></i>
+                <span class="label burmese-font">ဆီအမျိုးအစားစီမံခန့်ခွဲမှု</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('sites-section', this)">
+                <i class="fa-solid fa-building icon"></i>
+                <span class="label burmese-font">Site စီမံခန့်ခွဲမှု</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('suppliers-section', this)">
+                <i class="fa-solid fa-truck-field icon"></i>
+                <span class="label burmese-font">ပေးသွင်းသူစီမံခန့်ခွဲမှု</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('fuel-prices-section', this)">
+                <i class="fa-solid fa-money-bill-wave icon"></i>
+                <span class="label burmese-font">ဆီဈေးနှုန်းစီမံခန့်ခွဲမှု</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('site-stock-levels-section', this)">
+                <i class="fa-solid fa-warehouse icon"></i>
+                <span class="label burmese-font">Site အလိုက် လက်ကျန်သတ်မှတ်ရန်</span>
+            </a>
+
+            <div class="nav-group-title burmese-font">လုပ်ငန်းဆောင်ရွက်မှုများ</div>
+            <a href="#" class="nav-item" onclick="showSection('refill-needs-section', this)">
+                <i class="fa-solid fa-bell icon"></i>
+                <span class="label burmese-font">ဆီဖြည့်သွင်းရန်လိုအပ်မှုကြည့်ရှုရန်</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('record-refill-section', this)">
+                <i class="fa-solid fa-fill-drip icon"></i>
+                <span class="label burmese-font">ဆီဖြည့်သွင်းမှုမှတ်တမ်း</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('record-usage-section', this)">
+                <i class="fa-solid fa-fire-burner icon"></i>
+                <span class="label burmese-font">ဆီသုံးစွဲမှုမှတ်တမ်း</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('current-stock-section', this)">
+                <i class="fa-solid fa-boxes-stacked icon"></i>
+                <span class="label burmese-font">လက်ကျန်ဆီစစ်ဆေးရန်</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('refill-plan-section', this)">
+                <i class="fa-solid fa-calendar-alt icon"></i>
+                <span class="label burmese-font">ဆီဖြည့်သွင်းစီမံကိန်းရေးဆွဲရန်</span>
+            </a>
+
+            <div class="nav-group-title burmese-font">အစီရင်ခံစာများ</div>
+            <a href="#" class="nav-item" onclick="showSection('reports-section', this)">
+                <i class="fa-solid fa-file-alt icon"></i>
+                <span class="label burmese-font">Report များထုတ်ယူခြင်း</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-button" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+
+    <!-- Main Content Area -->
+    <div id="main-content-wrapper">
+        <!-- Top Navigation Bar -->
+        <header id="top-navbar">
+            <h1 class="title burmese-font">ဆီဖြည့်သွင်းခြင်းနှင့်စာရင်းထိန်းချုပ်ရေးစနစ်</h1>
+            <div class="profile-icon"><i class="fa-solid fa-user-circle"></i></div>
+        </header>
+
+        <!-- Content Area -->
+        <div id="content-area-wrapper">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="section-content active">
+                <h2 class="burmese-font">Dashboard Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="dashboard-card card-blue">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်း Site များ</p>
+                            <p id="total-sites-count" class="dashboard-card-value">0</p>
+                        </div>
+                        <i class="fa-solid fa-building dashboard-card-icon"></i>
+                    </div>
+                    <div class="dashboard-card card-red">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">လက်ကျန်နည်းသောဆီအမျိုးအစားများ</p>
+                            <p id="low-stock-count" class="dashboard-card-value">0</p>
+                        </div>
+                        <i class="fa-solid fa-exclamation-triangle dashboard-card-icon"></i>
+                    </div>
+                    <div class="dashboard-card card-green">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းဆီအမျိုးအစားများ</p>
+                            <p id="total-fuel-types-count" class="dashboard-card-value">0</p>
+                        </div>
+                        <i class="fa-solid fa-gas-pump dashboard-card-icon"></i>
+                    </div>
+                    <div class="dashboard-card card-purple">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းဖြည့်သွင်းမှု</p>
+                            <p id="total-refills-count" class="dashboard-card-value">0</p>
+                        </div>
+                        <i class="fa-solid fa-fill-drip dashboard-card-icon"></i>
+                    </div>
+                    <div class="dashboard-card card-orange">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းသုံးစွဲမှု</p>
+                            <p id="total-usages-count" class="dashboard-card-value">0</p>
+                        </div>
+                        <i class="fa-solid fa-fire-burner dashboard-card-icon"></i>
+                    </div>
+                </div>
+
+                <h3 class="burmese-font">သုံးစွဲမှုနှင့် ဖြည့်သွင်းမှု ခေတ်ရေစီးကြောင်း</h3>
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="trendPeriodSelect" class="burmese-font">ကာလ:</label>
+                        <select id="trendPeriodSelect" onchange="updateUsageRefillTrends()">
+                            <option value="weekly">အပတ်စဉ်</option>
+                            <option value="monthly">လစဉ်</option>
+                            <option value="yearly">နှစ်စဉ်</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="dashboard-card">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းသုံးစွဲမှု (ရွေးချယ်ထားသောကာလ)</p>
+                            <p id="trend-total-usage" class="dashboard-card-value">0.00</p>
+                        </div>
+                        <i class="fa-solid fa-chart-area dashboard-card-icon text-red-500"></i>
+                    </div>
+                    <div class="dashboard-card">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းဖြည့်သွင်းမှု (ရွေးချယ်ထားသောကာလ)</p>
+                            <p id="trend-total-refill" class="dashboard-card-value">0.00</p>
+                        </div>
+                        <i class="fa-solid fa-chart-bar dashboard-card-icon text-green-500"></i>
+                    </div>
+                </div>
+
+                <h3 class="burmese-font">ပေးသွင်းသူ စွမ်းဆောင်ရည်</h3>
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label for="supplierPerformanceSelect" class="burmese-font">ပေးသွင်းသူ:</label>
+                        <select id="supplierPerformanceSelect" onchange="updateSupplierPerformance()"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="dashboard-card">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းဖြည့်သွင်းသည့်ပမာဏ</p>
+                            <p id="supplier-total-quantity" class="dashboard-card-value">0.00</p>
+                        </div>
+                        <i class="fa-solid fa-truck-loading dashboard-card-icon text-blue-500"></i>
+                    </div>
+                    <div class="dashboard-card">
+                        <div>
+                            <p class="dashboard-card-title burmese-font">စုစုပေါင်းကုန်ကျစရိတ်</p>
+                            <p id="supplier-total-cost" class="dashboard-card-value">0.00</p>
+                        </div>
+                        <i class="fa-solid fa-hand-holding-dollar dashboard-card-icon text-purple-500"></i>
+                    </div>
+                </div>
+
+                <h3 class="burmese-font">နောက်ဆုံးဖြည့်သွင်းမှုမှတ်တမ်းများ</h3>
+                <div class="table-container overflow-x-auto mb-8">
+                    <table id="recent-refills-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>ဆီအမည်</th>
+                                <th>ဖြည့်သွင်းမည့် Site</th>
+                                <th>ပမာဏ</th>
+                                <th>ဖြည့်သွင်းသည့်ရက်စွဲ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Recent refills will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="burmese-font">နောက်ဆုံးသုံးစွဲမှုမှတ်တမ်းများ</h3>
+                <div class="table-container overflow-x-auto">
+                    <table id="recent-usages-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>ဆီအမည်</th>
+                                <th>Site အမည်</th>
+                                <th>ပမာဏ</th>
+                                <th>သုံးစွဲသည့်ရက်စွဲ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Recent usages will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fuel Types Management Section -->
+            <div id="fuel-types-section" class="section-content">
+                <h2 class="burmese-font">ဆီအမျိုးအစားစီမံခန့်ခွဲမှု</h2>
+                <form id="fuel-type-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="fuelName" class="burmese-font">ဆီအမည်:</label>
+                        <input type="text" id="fuelName" name="fuelName" placeholder="ဥပမာ: ဒီဇယ်">
+                        <p id="fuelNameError" class="text-red-500 text-xs mt-1 hidden burmese-font">ဆီအမည်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="fuelUnit" class="burmese-font">ယူနစ်:</label>
+                        <input type="text" id="fuelUnit" name="fuelUnit" placeholder="ဥပမာ: လီတာ">
+                        <p id="fuelUnitError" class="text-red-500 text-xs mt-1 hidden burmese-font">ယူနစ်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="addFuelType()">
+                            <i class="fa-solid fa-plus mr-2"></i>ထည့်သွင်းရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="updateFuelType()">
+                            <i class="fa-solid fa-edit mr-2"></i>ပြင်ဆင်ရန်
+                        </button>
+                        <button type="button" class="btn-danger" onclick="deleteFuelType()">
+                            <i class="fa-solid fa-trash-alt mr-2"></i>ဖျက်ရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="loadFuelTypes()">
+                            <i class="fa-solid fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </form>
+                <div class="table-container overflow-x-auto">
+                    <table id="fuel-types-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="sortable" data-sort-by="FuelID">ID</th>
+                                <th class="sortable" data-sort-by="FuelName">ဆီအမည်</th>
+                                <th class="sortable" data-sort-by="Unit">ယူနစ်</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Fuel types will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Site Management Section -->
+            <div id="sites-section" class="section-content">
+                <h2 class="burmese-font">Site စီမံခန့်ခွဲမှု</h2>
+                <form id="site-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="siteIdInput" class="burmese-font">Site ID:</label>
+                        <input type="text" id="siteIdInput" name="siteIdInput" placeholder="ဥပမာ: HO001">
+                        <p id="siteIdInputError" class="text-red-500 text-xs mt-1 hidden burmese-font">Site ID လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="siteName" class="burmese-font">Site အမည်:</label>
+                        <input type="text" id="siteName" name="siteName" placeholder="ဥပမာ: ရန်ကုန်ရုံးချုပ်">
+                        <p id="siteNameError" class="text-red-500 text-xs mt-1 hidden burmese-font">Site အမည်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="stateDivision" class="burmese-font">ပြည်နယ်/တိုင်း:</label>
+                        <input type="text" id="stateDivision" name="stateDivision" placeholder="ဥပမာ: ရန်ကုန်">
+                    </div>
+                    <div class="form-group">
+                        <label for="township" class="burmese-font">မြို့နယ်:</label>
+                        <input type="text" id="township" name="township" placeholder="ဥပမာ: ဗဟန်း">
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="addSite()">
+                            <i class="fa-solid fa-plus mr-2"></i>ထည့်သွင်းရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="updateSite()">
+                            <i class="fa-solid fa-edit mr-2"></i>ပြင်ဆင်ရန်
+                        </button>
+                        <button type="button" class="btn-danger" onclick="deleteSite()">
+                            <i class="fa-solid fa-trash-alt mr-2"></i>ဖျက်ရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="loadSites()">
+                            <i class="fa-solid fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </form>
+                <div class="table-container overflow-x-auto">
+                    <table id="sites-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>Site ID</th>
+                                <th>Site အမည်</th>
+                                <th>ပြည်နယ်/တိုင်း</th>
+                                <th>မြို့နယ်</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Sites will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Supplier Management Section -->
+            <div id="suppliers-section" class="section-content">
+                <h2 class="burmese-font">ပေးသွင်းသူစီမံခန့်ခွဲမှု</h2>
+                <form id="supplier-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="supplierName" class="burmese-font">ပေးသွင်းသူအမည်:</label>
+                        <input type="text" id="supplierName" name="supplierName" placeholder="ဥပမာ: ABC ဆီဆိုင်">
+                        <p id="supplierNameError" class="text-red-500 text-xs mt-1 hidden burmese-font">ပေးသွင်းသူအမည်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactPerson" class="burmese-font">ဆက်သွယ်ရမည့်သူ:</label>
+                        <input type="text" id="contactPerson" name="contactPerson" placeholder="ဥပမာ: ဦးမောင်မောင်">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactPhone" class="burmese-font">ဖုန်းနံပါတ်:</label>
+                        <input type="text" id="contactPhone" name="contactPhone" placeholder="ဥပမာ: 09123456789">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail" class="burmese-font">အီးမေးလ်:</label>
+                        <input type="text" id="contactEmail" name="contactEmail" placeholder="ဥပမာ: info@abc.com">
+                    </div>
+                    <div class="md:col-span-2 form-group">
+                        <label for="supplierAddress" class="burmese-font">လိပ်စာ:</label>
+                        <input type="text" id="supplierAddress" name="supplierAddress" placeholder="ဥပမာ: အမှတ် ၅, မင်းရဲကျော်စွာလမ်း">
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="addSupplier()">
+                            <i class="fa-solid fa-plus mr-2"></i>ထည့်သွင်းရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="updateSupplier()">
+                            <i class="fa-solid fa-edit mr-2"></i>ပြင်ဆင်ရန်
+                        </button>
+                        <button type="button" class="btn-danger" onclick="deleteSupplier()">
+                            <i class="fa-solid fa-trash-alt mr-2"></i>ဖျက်ရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="loadSuppliers()">
+                            <i class="fa-solid fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </form>
+                <div class="table-container overflow-x-auto">
+                    <table id="suppliers-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>ID</th>
+                                <th>ပေးသွင်းသူအမည်</th>
+                                <th>ဆက်သွယ်ရမည့်သူ</th>
+                                <th>ဖုန်းနံပါတ်</th>
+                                <th>အီးမေးလ်</th>
+                                <th>လိပ်စာ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Suppliers will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Fuel Prices Management Section -->
+            <div id="fuel-prices-section" class="section-content">
+                <h2 class="burmese-font">ဆီဈေးနှုန်းစီမံခန့်ခွဲမှု</h2>
+                <form id="fuel-price-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="priceSiteSelect" class="burmese-font">Site အမည်:</label>
+                        <select id="priceSiteSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="priceFuelSelect" class="burmese-font">ဆီအမည်:</label>
+                        <select id="priceFuelSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="effectiveDate" class="burmese-font">စတင်အကျိုးသက်ရောက်သည့်ရက်စွဲ:</label>
+                        <input type="date" id="effectiveDate">
+                        <p id="effectiveDateError" class="text-red-500 text-xs mt-1 hidden burmese-font">ရက်စွဲလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="pricePerUnit" class="burmese-font">ယူနစ်ဈေးနှုန်း:</label>
+                        <input type="number" id="pricePerUnit" step="0.01" placeholder="ဥပမာ: 1250.00">
+                        <p id="pricePerUnitError" class="text-red-500 text-xs mt-1 hidden burmese-font">ယူနစ်ဈေးနှုန်းလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="addFuelPrice()">
+                            <i class="fa-solid fa-plus mr-2"></i>ထည့်သွင်းရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="updateFuelPrice()">
+                            <i class="fa-solid fa-edit mr-2"></i>ပြင်ဆင်ရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="loadFuelPrices()">
+                            <i class="fa-solid fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </form>
+                <div class="table-container overflow-x-auto">
+                    <table id="fuel-prices-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>ID</th>
+                                <th>Site ID</th>
+                                <th>Site အမည်</th>
+                                <th>ဆီအမည်</th>
+                                <th>စတင်အကျိုးသက်ရောက်သည့်ရက်စွဲ</th>
+                                <th>ယူနစ်ဈေးနှုန်း</th>
+                                <th>နောက်ဆုံးပြင်ဆင်သည့်ရက်စွဲ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Fuel prices will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Site-specific Stock Levels Section -->
+            <div id="site-stock-levels-section" class="section-content">
+                <h2 class="burmese-font">Site အလိုက် လက်ကျန်သတ်မှတ်ရန်</h2>
+                <form id="site-stock-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="stockSiteSelect" class="burmese-font">Site အမည်:</label>
+                        <select id="stockSiteSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockFuelSelect" class="burmese-font">ဆီအမည်:</label>
+                        <select id="stockFuelSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockBalance" class="burmese-font">လက်ရှိလက်ကျန် (အစ):</label>
+                        <input type="number" id="stockBalance" step="0.01" placeholder="ဥပမာ: 5000.00">
+                        <p id="stockBalanceError" class="text-red-500 text-xs mt-1 hidden burmese-font">လက်ကျန်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="minStockLevelSite" class="burmese-font">အနည်းဆုံးလက်ကျန်:</label>
+                        <input type="number" id="minStockLevelSite" step="0.01" placeholder="ဥပမာ: 1000.00">
+                        <p id="minStockLevelSiteError" class="text-red-500 text-xs mt-1 hidden burmese-font">အနည်းဆုံးလက်ကျန်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="consumptionRatePerHour" class="burmese-font">ဆီစားနှုန်း/hr:</label>
+                        <input type="number" id="consumptionRatePerHour" step="0.01" value="0.00" placeholder="ဥပမာ: 50.00">
+                        <p id="consumptionRatePerHourError" class="text-red-500 text-xs mt-1 hidden burmese-font">ဆီစားနှုန်းလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="addOrUpdateSiteStock()">
+                            <i class="fa-solid fa-save mr-2"></i>ထည့်သွင်း/ပြင်ဆင်ရန်
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="loadSiteStockLevels()">
+                            <i class="fa-solid fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </form>
+                <div class="table-container overflow-x-auto">
+                    <table id="site-stock-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>ID</th>
+                                <th>Site ID</th>
+                                <th>Site အမည်</th>
+                                <th>ဆီအမည်</th>
+                                <th>လက်ကျန်</th>
+                                <th>အနည်းဆုံးလက်ကျန်</th>
+                                <th>ဆီစားနှုန်း/hr</th>
+                                <th>နောက်ဆုံးပြင်ဆင်သည့်ရက်စွဲ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Site stock levels will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Refill Needs Section -->
+            <div id="refill-needs-section" class="section-content">
+                <h2 class="burmese-font">ဆီဖြည့်သွင်းရန်လိုအပ်မှုကြည့်ရှုရန်</h2>
+                <div class="mb-6 p-5 rounded-lg shadow-sm bg-blue-50 border border-blue-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-group">
+                        <label for="refillNeedsStateDivision" class="burmese-font">ပြည်နယ်/တိုင်း:</label>
+                        <select id="refillNeedsStateDivision" onchange="loadTownshipsForRefillNeeds(); debounceCheckRefillNeeds();">
+                            <option value="">အားလုံး</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="refillNeedsTownship" class="burmese-font">မြို့နယ်:</label>
+                        <select id="refillNeedsTownship" onchange="debounceCheckRefillNeeds()">
+                            <option value="">အားလုံး</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="estimatedDaysForProjection" class="burmese-font">ခန့်မှန်းခြေ လည်ပတ်မည့်ရက် (ရက်):</label>
+                        <input type="number" id="estimatedDaysForProjection" step="1" value="7" onkeyup="debounceCheckRefillNeeds()" placeholder="ဥပမာ: 7">
+                    </div>
+                </div>
+                <div class="table-container overflow-x-auto">
+                    <table id="refill-needs-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>Site ID</th>
+                                <th>Site အမည်</th>
+                                <th>ဆီအမည်</th>
+                                <th>လက်ရှိလက်ကျန်</th>
+                                <th>အနည်းဆုံးလက်ကျန်</th>
+                                <th>ဆီစားနှုန်း/hr</th>
+                                <th>ခန့်မှန်းခြေ လိုအပ်သောပမာဏ</th>
+                                <th>လုပ်ဆောင်ချက်</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Refill needs will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="refill-needs-summary" class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 class="text-lg font-semibold text-green-800 burmese-font mb-2">စုစုပေါင်း လိုအပ်သောပမာဏများ:</h3>
+                    <div id="total-refill-needs-display" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-green-700">
+                        <!-- Total needed quantities will be displayed here -->
+                    </div>
+                </div>
+                <p id="refill-needs-message" class="text-center text-gray-500 mt-6 text-lg burmese-font"></p>
+            </div>
+
+            <!-- Record Refill Section -->
+            <div id="record-refill-section" class="section-content">
+                <h2 class="burmese-font">ဆီဖြည့်သွင်းမှုမှတ်တမ်း</h2>
+                <form id="refill-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="refillFuelSelect" class="burmese-font">ဆီအမည်:</label>
+                        <select id="refillFuelSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="refillSiteSelect" class="burmese-font">ဖြည့်သွင်းမည့် Site (Destination):</label>
+                        <select id="refillSiteSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="refillSourceSiteSelect" class="burmese-font">ဆီရယူသည့် Site (Source):</label>
+                        <select id="refillSourceSiteSelect">
+                            <option value="">-- ပြင်ပပေးသွင်းသူ --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="refillSupplierSelect" class="burmese-font">ပေးသွင်းသူ:</label>
+                        <select id="refillSupplierSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="refillQuantity" class="burmese-font">ပမာဏ (ယူနစ်):</label>
+                        <input type="number" id="refillQuantity" step="0.01" placeholder="ဥပမာ: 1000.00">
+                        <p id="refillQuantityError" class="text-red-500 text-xs mt-1 hidden burmese-font">ပမာဏလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="refillUnitPrice" class="burmese-font">ယူနစ်ဈေးနှုန်း:</label>
+                        <input type="number" id="refillUnitPrice" step="0.01" placeholder="ဥပမာ: 1250.00">
+                        <p id="refillUnitPriceError" class="text-red-500 text-xs mt-1 hidden burmese-font">ယူနစ်ဈေးနှုန်းလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="transportationCost" class="burmese-font">သယ်ယူပို့ဆောင်စရိတ်:</label>
+                        <input type="number" id="transportationCost" step="0.01" value="0.00" placeholder="ဥပမာ: 50000.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="loadingUnloadingCost" class="burmese-font">အတင်အချစရိတ်:</label>
+                        <input type="number" id="loadingUnloadingCost" step="0.01" value="0.00" placeholder="ဥပမာ: 10000.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="refillDate" class="burmese-font">ဖြည့်သွင်းသည့်ရက်စွဲ:</label>
+                        <input type="date" id="refillDate">
+                        <p id="refillDateError" class="text-red-500 text-xs mt-1 hidden burmese-font">ရက်စွဲလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="recordRefill()">
+                            <i class="fa-solid fa-plus-circle mr-2"></i>မှတ်တမ်းတင်ရန်
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Record Usage Section -->
+            <div id="record-usage-section" class="section-content">
+                <h2 class="burmese-font">ဆီသုံးစွဲမှုမှတ်တမ်း</h2>
+                <form id="usage-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="usageFuelSelect" class="burmese-font">ဆီအမည်:</label>
+                        <select id="usageFuelSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="usageSiteSelect" class="burmese-font">သုံးစွဲသည့် Site:</label>
+                        <select id="usageSiteSelect"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="usageQuantity" class="burmese-font">ပမာဏ (ယူနစ်):</label>
+                        <input type="number" id="usageQuantity" step="0.01" placeholder="ဥပမာ: 100.00">
+                        <p id="usageQuantityError" class="text-red-500 text-xs mt-1 hidden burmese-font">ပမာဏလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="usageDepartment" class="burmese-font">ဌာန:</label>
+                        <input type="text" id="usageDepartment" placeholder="ဥပမာ: စက်မှုဌာန">
+                        <p id="usageDepartmentError" class="text-red-500 text-xs mt-1 hidden burmese-font">ဌာနလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="usagePurpose" class="burmese-font">ရည်ရွယ်ချက်:</label>
+                        <input type="text" id="usagePurpose" placeholder="ဥပမာ: ဂျင်နရေတာသုံးရန်">
+                        <p id="usagePurposeError" class="text-red-500 text-xs mt-1 hidden burmese-font">ရည်ရွယ်ချက်လိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="usageDate" class="burmese-font">သုံးစွဲသည့်ရက်စွဲ:</label>
+                        <input type="date" id="usageDate">
+                        <p id="usageDateError" class="text-red-500 text-xs mt-1 hidden burmese-font">ရက်စွဲလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 mt-4">
+                        <button type="button" class="btn-primary" onclick="recordUsage()">
+                            <i class="fa-solid fa-minus-circle mr-2"></i>မှတ်တမ်းတင်ရန်
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Check Current Stock Section -->
+            <div id="current-stock-section" class="section-content">
+                <h2 class="burmese-font">လက်ကျန်ဆီစစ်ဆေးရန်</h2>
+                <div class="table-container overflow-x-auto">
+                    <table id="current-stock-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>Site ID</th>
+                                <th>Site အမည်</th>
+                                <th>ဆီအမည်</th>
+                                <th>ယူနစ်</th>
+                                <th>လက်ကျန်</th>
+                                <th>အနည်းဆုံးလက်ကျန်</th>
+                                <th>ဆီစားနှုန်း/hr</th>
+                                <th>နောက်ဆုံးပြင်ဆင်သည့်ရက်စွဲ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Current stock will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Refill Plan Section -->
+            <div id="refill-plan-section" class="section-content">
+                <h2 class="burmese-font">ဆီဖြည့်သွင်းစီမံကိန်းရေးဆွဲရန်</h2>
+                <form id="refill-plan-form" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="form-group">
+                        <label for="planSiteSelect" class="burmese-font">Site အမည်:</label>
+                        <select id="planSiteSelect" onchange="calculateEstimatedCost(); updateEstimatedRefillTime();"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planFuelSelect" class="burmese-font">ဆီအမည်:</label>
+                        <select id="planFuelSelect" onchange="calculateEstimatedCost(); updateEstimatedRefillTime();"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planQuantity" class="burmese-font">ဖြည့်သွင်းလိုသောပမာဏ:</label>
+                        <input type="number" id="planQuantity" step="0.01" onkeyup="calculateEstimatedCost()" placeholder="ဥပမာ: 1000.00">
+                        <p id="planQuantityError" class="text-red-500 text-xs mt-1 hidden burmese-font">ပမာဏလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="planDate" class="burmese-font">စီစဉ်သည့်ရက်စွဲ:</label>
+                        <input type="date" id="planDate">
+                        <p id="planDateError" class="text-red-500 text-xs mt-1 hidden burmese-font">ရက်စွဲလိုအပ်ပါသည်။</p>
+                    </div>
+                    <div class="md:col-span-2 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p id="estimatedCost" class="text-lg font-semibold text-blue-800 burmese-font">ခန့်မှန်းကုန်ကျစရိတ်: 0.00 ကျပ်</p>
+                        <p id="estimatedRefillTime" class="text-lg font-semibold text-blue-800 burmese-font mt-2">ခန့်မှန်းခြေ ဆီဖြည့်ရန်အချိန်: N/A</p>
+                    </div>
+                </form>
+
+                <h3 class="burmese-font">လက်ရှိလက်ကျန်နှင့် ဖြည့်သွင်းရန်လိုအပ်ချက်များ (Site အလိုက်):</h3>
+                <div class="table-container overflow-x-auto">
+                    <table id="refill-plan-table" class="min-w-full">
+                        <thead class="table-header">
+                            <tr>
+                                <th>Site ID</th>
+                                <th>Site အမည်</th>
+                                <th>ဆီအမည်</th>
+                                <th>လက်ရှိလက်ကျန်</th>
+                                <th>အနည်းဆုံးလက်ကျန်</th>
+                                <th>ဆီစားနှုန်း/hr</th>
+                                <th>လိုအပ်သောပမာဏ</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <!-- Refill plan needs will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-sm text-gray-600 mt-6 burmese-font">* မှတ်ချက်: ဆီဖြည့်သွင်းရန် အကောင်းဆုံးအချိန်ကို သုံးစွဲမှုမှတ်တမ်းများအပေါ် မူတည်၍ ခန့်မှန်းနိုင်သည်။</p>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports-section" class="section-content">
+                <h2 class="burmese-font">Report များထုတ်ယူခြင်း</h2>
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button class="tab-button burmese-font active-tab" onclick="openReportTab(event, 'refill-history-tab')">ဆီဖြည့်သွင်းမှုမှတ်တမ်း</button>
+                        <button class="tab-button burmese-font" onclick="openReportTab(event, 'usage-history-tab')">ဆီသုံးစွဲမှုမှတ်တမ်း</button>
+                        <button class="tab-button burmese-font" onclick="openReportTab(event, 'stock-report-tab')">လက်ရှိဆီလက်ကျန်</button>
+                    </nav>
+                </div>
+
+                <!-- Refill History Tab Content -->
+                <div id="refill-history-tab" class="report-tab-content pt-4 active">
+                    <h3 class="burmese-font">ဆီဖြည့်သွင်းမှုမှတ်တမ်း</h3>
+                    <div class="mb-4 form-group">
+                        <label for="refillHistoryFilter" class="burmese-font">Filter:</label>
+                        <input type="text" id="refillHistoryFilter" onkeyup="debounceFilterTable('refill-history-table', this.value)" placeholder="Filter by Site, Fuel, Supplier, etc.">
+                    </div>
+                    <div class="flex justify-end gap-3 mb-4">
+                        <button class="btn-secondary text-sm px-3 py-1 burmese-font" onclick="exportTableToPdf('refill-history-table', 'RefillHistoryReport')">
+                            <i class="fa-solid fa-file-pdf mr-2"></i>PDF ထုတ်ရန်
+                        </button>
+                        <button class="btn-secondary text-sm px-3 py-1 burmese-font" onclick="exportTableToExcel('refill-history-table', 'RefillHistoryReport')">
+                            <i class="fa-solid fa-file-excel mr-2"></i>Excel ထုတ်ရန်
+                        </button>
+                    </div>
+                    <div class="table-container overflow-x-auto">
+                        <table id="refill-history-table" class="min-w-full">
+                            <thead class="table-header">
+                                <tr>
+                                    <th>ဖြည့်သွင်းမှု ID</th>
+                                    <th>Transaction ID</th>
+                                    <th>ဆီအမည်</th>
+                                    <th>ဖြည့်သွင်းမည့် Site</th>
+                                    <th>ဆီရယူသည့် Site</th>
+                                    <th>ပေးသွင်းသူ</th>
+                                    <th>ပမာဏ</th>
+                                    <th>ယူနစ်ဈေးနှုန်း</th>
+                                    <th>သယ်ယူပို့ဆောင်စရိတ်</th>
+                                    <th>အတင်အချစရိတ်</th>
+                                    <th>စုစုပေါင်းကုန်ကျစရိတ်</th>
+                                    <th>ဖြည့်သွင်းသည့်ရက်စွဲ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <!-- Refill history will be loaded here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Usage History Tab Content -->
+                <div id="usage-history-tab" class="report-tab-content pt-4">
+                    <h3 class="burmese-font">ဆီသုံးစွဲမှုမှတ်တမ်း</h3>
+                    <div class="mb-4 form-group">
+                        <label for="usageHistoryFilter" class="burmese-font">Filter:</label>
+                        <input type="text" id="usageHistoryFilter" onkeyup="debounceFilterTable('usage-history-table', this.value)" placeholder="Filter by Site, Fuel, Department, etc.">
+                    </div>
+                    <div class="flex justify-end gap-3 mb-4">
+                        <button class="btn-secondary text-sm px-3 py-1 burmese-font" onclick="exportTableToPdf('usage-history-table', 'UsageHistoryReport')">
+                            <i class="fa-solid fa-file-pdf mr-2"></i>PDF ထုတ်ရန်
+                        </button>
+                        <button class="btn-secondary text-sm px-3 py-1 burmese-font" onclick="exportTableToExcel('usage-history-table', 'UsageHistoryReport')">
+                            <i class="fa-solid fa-file-excel mr-2"></i>Excel ထုတ်ရန်
+                        </button>
+                    </div>
+                    <div class="table-container overflow-x-auto">
+                        <table id="usage-history-table" class="min-w-full">
+                            <thead class="table-header">
+                                <tr>
+                                    <th>သုံးစွဲမှု ID</th>
+                                    <th>Transaction ID</th>
+                                    <th>ဆီအမည်</th>
+                                    <th>Site အမည်</th>
+                                    <th>ဌာန</th>
+                                    <th>ပမာဏ</th>
+                                    <th>သုံးစွဲသည့်ရက်စွဲ</th>
+                                    <th>ရည်ရွယ်ချက်</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <!-- Usage history will be loaded here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Current Stock Report Tab Content -->
+                <div id="stock-report-tab" class="report-tab-content pt-4">
+                    <h3 class="burmese-font">လက်ရှိဆီလက်ကျန်</h3>
+                    <div class="mb-4 form-group">
+                        <label for="stockReportFilter" class="burmese-font">Filter:</label>
+                        <input type="text" id="stockReportFilter" onkeyup="debounceFilterTable('stock-report-table', this.value)" placeholder="Filter by Site, Fuel, etc.">
+                    </div>
+                    <div class="flex justify-end gap-3 mb-4">
+                        <button class="btn-secondary text-sm px-3 py-1 burmese-font" onclick="exportTableToPdf('stock-report-table', 'CurrentStockReport')">
+                            <i class="fa-solid fa-file-pdf mr-2"></i>PDF ထုတ်ရန်
+                        </button>
+                        <button class="btn-secondary text-sm px-3 py-1 burmese-font" onclick="exportTableToExcel('stock-report-table', 'CurrentStockReport')">
+                            <i class="fa-solid fa-file-excel mr-2"></i>Excel ထုတ်ရန်
+                        </button>
+                    </div>
+                    <div class="table-container overflow-x-auto">
+                        <table id="stock-report-table" class="min-w-full">
+                            <thead class="table-header">
+                                <tr>
+                                    <th>Site ID</th>
+                                    <th>Site အမည်</th>
+                                    <th>ဆီအမည်</th>
+                                    <th>ယူနစ်</th>
+                                    <th>လက်ကျန်</th>
+                                    <th>အနည်းဆုံးလက်ကျန်</th>
+                                    <th>ဆီစားနှုန်း/hr</th>
+                                    <th>နောက်ဆုံးပြင်ဆင်သည့်ရက်စွဲ</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <!-- Current stock report will be loaded here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-600 mt-6 burmese-font">PDF/Excel Report များထုတ်ယူရန်အတွက် နောက်ထပ် လုပ်ဆောင်နိုင်ပါသည်။</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Theme Toggle (Floating Button) -->
+   <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+        <i class="fa-solid fa-moon"></i>    
+    </button>
+
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="spinner"></div>
+        <p class="burmese-font">အချက်အလက်များ တင်နေပါသည်...</p>
+        <div id="skeleton-loader-content" class="w-1/2 mt-4 p-4 bg-white rounded-lg shadow-lg">
+            <div class="skeleton-row">
+                <div class="skeleton-cell w-1/4"></div>
+                <div class="skeleton-cell w-1/2"></div>
+                <div class="skeleton-cell w-1/4"></div>
+            </div>
+            <div class="skeleton-row">
+                <div class="skeleton-cell w-1/3"></div>
+                <div class="skeleton-cell w-2/3"></div>
+            </div>
+            <div class="skeleton-row">
+                <div class="skeleton-cell w-1/2"></div>
+                <div class="skeleton-cell w-1/4"></div>
+                <div class="skeleton-cell w-1/4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Message Box HTML -->
+    <div id="message-modal-overlay" class="message-modal-overlay">
+        <div class="message-modal">
+            <h3 id="message-modal-title" class="burmese-font"></h3>
+            <p id="message-modal-content" class="burmese-font"></p>
+            <div id="message-modal-actions" class="message-modal-actions">
+                <!-- Buttons will be injected here by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base URL for your Flask API
+        const API_BASE_URL = 'http://127.0.0.1:5000/api'; // Ensure this matches your Flask app's address
+
+        // Global data stores (will now be populated from API)
+        let fuelTypes = [];
+        let sites = [];
+        let suppliers = [];
+        let siteStocks = [];
+        let fuelPrices = [];
+        let refillHistory = []; // To store full refill history for reports
+        let usageHistory = [];  // To store full usage history for reports
+
+        // Theme management
+        let isDayMode = false; // Default to night mode (dark background)
+
+        // Debounce utility function
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Debounced versions of functions
+        const debounceCheckRefillNeeds = debounce(checkRefillNeeds, 300);
+        const debounceFilterTable = debounce(filterTable, 300);
+
+
+        // Function to show/hide loading overlay
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+            document.getElementById('loading-overlay').classList.add('visible');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('visible');
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        // --- Custom Message Box Functions ---
+        function showMessage(title, message, type = 'info') {
+            const modalOverlay = document.getElementById('message-modal-overlay');
+            const modalTitle = document.getElementById('message-modal-title');
+            const modalContent = document.getElementById('message-modal-content');
+            const modalActions = document.getElementById('message-modal-actions');
+
+            modalTitle.textContent = title;
+            modalContent.textContent = message;
+            modalActions.innerHTML = ''; // Clear previous buttons
+
+            const okButton = document.createElement('button');
+            okButton.textContent = 'OK';
+            okButton.classList.add('btn', `btn-${type}`);
+            okButton.onclick = () => {
+                modalOverlay.classList.remove('visible');
+            };
+            modalActions.appendChild(okButton);
+
+            modalOverlay.classList.add('visible');
+        }
+
+        function showConfirm(title, message, onConfirmCallback) {
+            const modalOverlay = document.getElementById('message-modal-overlay');
+            const modalTitle = document.getElementById('message-modal-title');
+            const modalContent = document.getElementById('message-modal-content');
+            const modalActions = document.getElementById('message-modal-actions');
+
+            modalTitle.textContent = title;
+            modalContent.textContent = message;
+            modalActions.innerHTML = ''; // Clear previous buttons
+
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = 'Yes';
+            confirmButton.classList.add('btn', 'btn-confirm');
+            confirmButton.onclick = () => {
+                modalOverlay.classList.remove('visible');
+                onConfirmCallback();
+            };
+            modalActions.appendChild(confirmButton);
+
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'No';
+            cancelButton.classList.add('btn', 'btn-cancel');
+            cancelButton.onclick = () => {
+                modalOverlay.classList.remove('visible');
+            };
+            modalActions.appendChild(cancelButton);
+
+            modalOverlay.classList.add('visible');
+        }
+
+        // Helper function to show/hide sections and manage active navigation item
+        async function showSection(sectionId, clickedElement = null) {
+            console.log(`Showing section: ${sectionId}`);
+
+            const currentActiveSection = document.querySelector('.section-content.active');
+            const targetSection = document.getElementById(sectionId);
+
+            // If there's an active section and it's not the target section
+            if (currentActiveSection && currentActiveSection.id !== sectionId) {
+                // Start fade-out for the current section
+                currentActiveSection.style.opacity = '0';
+                currentActiveSection.style.pointerEvents = 'none'; // Disable interactions during fade-out
+
+                // Wait for the fade-out transition to complete
+                await new Promise(resolve => {
+                    const transitionEndHandler = () => {
+                        currentActiveSection.style.display = 'none'; // Hide completely after fade-out
+                        currentActiveSection.classList.remove('active');
+                        currentActiveSection.removeEventListener('transitionend', transitionEndHandler);
+                        resolve();
+                    };
+                    // Add listener for opacity transition end
+                    currentActiveSection.addEventListener('transitionend', transitionEndHandler, { once: true });
+
+                    // Fallback in case transitionend doesn't fire (e.g., element removed from DOM or transition is instant)
+                    setTimeout(() => {
+                        if (currentActiveSection.style.opacity === '0' && currentActiveSection.style.display !== 'none') {
+                            currentActiveSection.style.display = 'none';
+                            currentActiveSection.classList.remove('active');
+                            currentActiveSection.removeEventListener('transitionend', transitionEndHandler); // Clean up
+                            resolve();
+                        }
+                    }, 450); // Slightly longer than CSS transition (0.4s)
+                });
+            }
+
+            // Update active state for sidebar navigation items
+            document.querySelectorAll('#sidebar .nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+            } else {
+                const navItem = document.querySelector(`#sidebar .nav-item[onclick*="${sectionId}"]`);
+                if (navItem) navItem.classList.add('active');
+            }
+
+            // Close sidebar on mobile after selection
+            if (window.innerWidth <= 768) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+
+            // Show the new section
+            if (targetSection) {
+                targetSection.style.display = 'block'; // Make it block to occupy space
+                targetSection.style.visibility = 'visible'; // Make it visible
+                targetSection.style.pointerEvents = 'auto'; // Enable interactions
+                void targetSection.offsetWidth; // Trigger reflow to apply display:block immediately
+                targetSection.classList.add('active'); // Add active class to trigger opacity transition
+                targetSection.style.opacity = '1'; // Fade in
+            }
+
+            showLoading();
+            try {
+                if (sectionId === 'dashboard-section') {
+                    await loadDashboardData();
+                } else if (sectionId === 'fuel-types-section') {
+                    await loadFuelTypes();
+                } else if (sectionId === 'sites-section') {
+                    await loadSites();
+                } else if (sectionId === 'suppliers-section') {
+                    await loadSuppliers();
+                } else if (sectionId === 'fuel-prices-section') {
+                    await loadFuelTypesForDropdowns('priceFuelSelect');
+                    await loadSitesForDropdowns('priceSiteSelect', false, true);
+                    // Find the Head Office site and pre-select it if it exists
+                    const headOfficeSite = sites.find(site => site.Site_ID === 'HO001');
+                    if (headOfficeSite) {
+                        document.getElementById('priceSiteSelect').value = headOfficeSite.Site_ID;
+                    }
+                    await loadFuelPrices();
+                } else if (sectionId === 'site-stock-levels-section') {
+                    await loadFuelTypesForDropdowns('stockFuelSelect');
+                    await loadSitesForDropdowns('stockSiteSelect', false, true);
+                    await loadSiteStockLevels();
+                } else if (sectionId === 'refill-needs-section') {
+                    await loadStatesForRefillNeeds();
+                    await loadTownshipsForRefillNeeds(); // Load townships based on initial state selection (or 'All')
+                    await checkRefillNeeds();
+                } else if (sectionId === 'record-refill-section') {
+                    await loadFuelTypesForDropdowns('refillFuelSelect');
+                    await loadSitesForDropdowns('refillSiteSelect', false, true);
+                    await loadSitesForDropdowns('refillSourceSiteSelect', true, true); // Allow empty for external supplier
+                    await loadSuppliersForDropdown('refillSupplierSelect');
+                    document.getElementById('refillDate').valueAsDate = new Date(); // Auto-fill today's date
+                } else if (sectionId === 'record-usage-section') {
+                    await loadFuelTypesForDropdowns('usageFuelSelect');
+                    await loadSitesForDropdowns('usageSiteSelect', false, true);
+                    document.getElementById('usageDate').valueAsDate = new Date(); // Auto-fill today's date
+                } else if (sectionId === 'current-stock-section') {
+                    await checkCurrentStock();
+                } else if (sectionId === 'refill-plan-section') {
+                    await loadFuelTypesForDropdowns('planFuelSelect');
+                    await loadSitesForDropdowns('planSiteSelect', false, true);
+                    document.getElementById('planDate').valueAsDate = new Date(); // Auto-fill today's date
+                    await loadRefillPlanNeeds();
+                    await calculateEstimatedCost(); // Calculate initial cost on load
+                    await updateEstimatedRefillTime(); // Calculate initial estimated refill time
+                } else if (sectionId === 'reports-section') {
+                    openReportTab(null, 'refill-history-tab'); // Default to refill history tab
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Function to toggle sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Function to render data into a table
+        function renderTable(data, tableId, columns, sortableColumns = {}) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            if (!data || data.length === 0) {
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = columns.length;
+                cell.className = 'text-center py-4 text-gray-500 burmese-font';
+                cell.textContent = 'အချက်အလက်မရှိသေးပါ';
+                return;
+            }
+
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                row.className = 'table-row';
+                // Add data-attributes for easy selection/update
+                if (tableId === 'fuel-types-table') {
+                    row.dataset.fuelId = item.FuelID;
+                } else if (tableId === 'sites-table') {
+                    row.dataset.siteId = item.Site_ID;
+                } else if (tableId === 'site-stock-table') {
+                    row.dataset.stockId = item.StockID;
+                } else if (tableId === 'fuel-prices-table') {
+                    row.dataset.fuelPriceId = item.FuelPriceID;
+                } else if (tableId === 'suppliers-table') {
+                    row.dataset.supplierId = item.SupplierID;
+                }
+
+                columns.forEach(col => {
+                    const cell = row.insertCell();
+                    let value = item[col];
+                    // Handle date formatting
+                    if (col.includes('Date') && value) {
+                        try {
+                            const date = new Date(value);
+                            value = date.toLocaleString();
+                        } catch (e) {
+                            value = value; // Keep original if parsing fails
+                        }
+                    } else if (typeof value === 'number') {
+                        value = value.toFixed(2); // Format numbers to 2 decimal places
+                    }
+                    cell.textContent = value !== null && value !== undefined ? value : 'N/A';
+                    if (typeof item[col] === 'number') {
+                        cell.classList.add('text-right'); // Align numbers to right
+                    }
+                });
+
+                // Add "Add to Plan" button for refill-needs-table
+                if (tableId === 'refill-needs-table') {
+                    const actionCell = row.insertCell();
+                    const button = document.createElement('button');
+                    button.textContent = 'Add to Plan';
+                    button.className = 'btn-accent text-sm px-3 py-1 burmese-font';
+                    button.onclick = () => addToRefillPlan(item.Site_ID, item.FuelID, item.EstimatedNeeded);
+                    actionCell.appendChild(button);
+                }
+            });
+
+            // Add sorting event listeners to headers if sortableColumns are provided
+            const tableHeader = document.querySelector(`#${tableId} thead`);
+            if (tableHeader) {
+                tableHeader.querySelectorAll('th').forEach(th => {
+                    const sortBy = th.dataset.sortBy;
+                    if (sortBy && sortableColumns[sortBy]) {
+                        th.classList.add('sortable');
+                        th.onclick = () => sortTable(tableId, data, sortBy, columns);
+                    }
+                });
+            }
+        }
+
+        // Sorting state for tables
+        let sortStates = {}; // { tableId: { sortBy: 'columnName', order: 'asc' | 'desc' } }
+
+        function sortTable(tableId, data, sortBy, columns) {
+            const currentSort = sortStates[tableId] || { sortBy: '', order: '' };
+            let newOrder = 'asc';
+
+            if (currentSort.sortBy === sortBy) {
+                newOrder = currentSort.order === 'asc' ? 'desc' : 'asc';
+            }
+
+            // Clear existing sort classes
+            document.querySelectorAll(`#${tableId} thead th`).forEach(th => {
+                th.classList.remove('asc', 'desc');
+            });
+
+            // Add new sort class to the clicked header
+            const clickedHeader = document.querySelector(`#${tableId} thead th[data-sort-by="${sortBy}"]`);
+            if (clickedHeader) {
+                clickedHeader.classList.add(newOrder);
+            }
+
+            const sortedData = [...data].sort((a, b) => {
+                let valA = a[sortBy];
+                let valB = b[sortBy];
+
+                // Handle string vs number comparison
+                if (typeof valA === 'string' && typeof valB === 'string') {
+                    return newOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else {
+                    return newOrder === 'asc' ? valA - valB : valB - a[sortBy];
+                }
+            });
+
+            sortStates[tableId] = { sortBy: sortBy, order: newOrder };
+            renderTable(sortedData, tableId, columns); // Re-render with sorted data
+        }
+
+
+        // --- API Interaction Functions (Using fetch to connect to Flask Backend) ---
+        async function callApi(endpoint, method = 'GET', data = null) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            if (data) {
+                options.body = JSON.stringify(data);
+            }
+
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `API error: ${response.statusText}`);
+                }
+                return response.json();
+            } catch (error) {
+                console.error(`Error calling API ${endpoint}:`, error);
+                throw error; // Re-throw to be caught by specific UI functions
+            }
+        }
+
+        // --- Data Loading Functions ---
+
+        async function loadDashboardData() {
+            try {
+                // Fetch all necessary data for dashboard calculations
+                fuelTypes = await callApi('/fueltypes');
+                sites = await callApi('/sites');
+                siteStocks = await callApi('/fuelstock');
+                refillHistory = await callApi('/refillhistory');
+                usageHistory = await callApi('/usagehistory');
+
+                // Update quick stats
+                document.getElementById('total-sites-count').textContent = sites.length;
+                const lowStockItems = siteStocks.filter(s => s.Balance < s.MinStockLevel_Site);
+                document.getElementById('low-stock-count').textContent = lowStockItems.length;
+                document.getElementById('total-fuel-types-count').textContent = fuelTypes.length;
+                document.getElementById('total-refills-count').textContent = refillHistory.length;
+                document.getElementById('total-usages-count').textContent = usageHistory.length;
+
+                // Render recent refills (last 5)
+                const recentRefills = refillHistory.slice(0, 5); // Get last 5
+                renderTable(recentRefills, 'recent-refills-table', [
+                    'TransactionID', 'FuelName', 'DestinationSiteName', 'Quantity', 'RefillDate'
+                ]);
+
+                // Render recent usages (last 5)
+                const recentUsages = usageHistory.slice(0, 5); // Get last 5
+                renderTable(recentUsages, 'recent-usages-table', [
+                    'TransactionID', 'FuelName', 'SiteName', 'Quantity', 'UsageDate'
+                ]);
+
+                // Initialize dashboard trends and supplier performance
+                loadSuppliersForDropdown('supplierPerformanceSelect', false, false); // Load suppliers for dashboard filter
+                updateUsageRefillTrends();
+                updateSupplierPerformance();
+
+            } catch (error) {
+                showMessage('အမှား', 'Dashboard အချက်အလက်များ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadFuelTypes() {
+            try {
+                fuelTypes = await callApi('/fueltypes');
+                renderTable(fuelTypes, 'fuel-types-table', ['FuelID', 'FuelName', 'Unit'], { FuelID: true, FuelName: true, Unit: true });
+            } catch (error) {
+                showMessage('အမှား', 'ဆီအမျိုးအစားများ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadSites() {
+            try {
+                sites = await callApi('/sites');
+                renderTable(sites, 'sites-table', ['Site_ID', 'SiteName', 'State_Division', 'Township']);
+            }
+            catch (error) {
+                showMessage('အမှား', 'Site များ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadSuppliers() {
+            try {
+                suppliers = await callApi('/suppliers');
+                renderTable(suppliers, 'suppliers-table', ['SupplierID', 'SupplierName', 'ContactPerson', 'ContactPhone', 'ContactEmail', 'Address']);
+            } catch (error) {
+                showMessage('အမှား', 'ပေးသွင်းသူများ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadFuelPrices() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+
+                fuelPrices = await callApi('/fuelprices');
+                const dataForTable = fuelPrices.map(fp => {
+                    return {
+                        FuelPriceID: fp.FuelPriceID,
+                        Site_ID: fp.Site_ID,
+                        SiteName: fp.SiteName,
+                        FuelName: fp.FuelName,
+                        EffectiveDate: fp.EffectiveDate,
+                        PricePerUnit: fp.PricePerUnit,
+                        LastUpdated: fp.LastUpdated
+                    };
+                });
+                renderTable(dataForTable, 'fuel-prices-table', ['FuelPriceID', 'Site_ID', 'SiteName', 'FuelName', 'EffectiveDate', 'PricePerUnit', 'LastUpdated']);
+            } catch (error) {
+                showMessage('အမှား', 'ဆီဈေးနှုန်းများ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadSiteStockLevels() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+
+                siteStocks = await callApi('/fuelstock');
+                const dataForTable = siteStocks.map(s => {
+                    return {
+                        StockID: s.StockID,
+                        Site_ID: s.Site_ID,
+                        SiteName: s.SiteName,
+                        FuelName: s.FuelName,
+                        Balance: s.Balance,
+                        MinStockLevel_Site: s.MinStockLevel_Site,
+                        ConsumptionRatePerHour: s.ConsumptionRatePerHour,
+                        LastUpdated: s.LastUpdated
+                    };
+                });
+                renderTable(dataForTable, 'site-stock-table', ['StockID', 'Site_ID', 'SiteName', 'FuelName', 'Balance', 'MinStockLevel_Site', 'ConsumptionRatePerHour', 'LastUpdated']);
+            } catch (error) {
+                showMessage('အမှား', 'Site အလိုက် လက်ကျန်အဆင့်များ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadFuelTypesForDropdowns(selectId) {
+            if (fuelTypes.length === 0) {
+                fuelTypes = await callApi('/fueltypes');
+            }
+            const selectElement = document.getElementById(selectId);
+            if (selectElement) {
+                selectElement.innerHTML = '';
+                fuelTypes.forEach(fuel => {
+                    const option = document.createElement('option');
+                    option.value = fuel.FuelID;
+                    option.textContent = fuel.FuelName;
+                    selectElement.appendChild(option);
+                });
+                if (fuelTypes.length > 0) {
+                    selectElement.value = fuelTypes[0].FuelID;
+                }
+            }
+        }
+
+        async function loadSitesForDropdowns(selectId, allowEmpty = false, showIdAndName = false) {
+            if (sites.length === 0) {
+                sites = await callApi('/sites');
+            }
+            const selectElement = document.getElementById(selectId);
+            if (selectElement) {
+                selectElement.innerHTML = '';
+                if (allowEmpty) {
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = '-- ပြင်ပပေးသွင်းသူ --';
+                    selectElement.appendChild(emptyOption);
+                }
+                sites.forEach(site => {
+                    const option = document.createElement('option');
+                    option.value = site.Site_ID;
+                    option.textContent = showIdAndName ? `${site.Site_ID} - ${site.SiteName}` : site.SiteName;
+                    selectElement.appendChild(option);
+                });
+                if (!allowEmpty && sites.length > 0) {
+                    selectElement.value = sites[0].Site_ID;
+                }
+            }
+        }
+
+        async function loadSuppliersForDropdown(selectId) {
+            if (suppliers.length === 0) {
+                suppliers = await callApi('/suppliers');
+            }
+            const selectElement = document.getElementById(selectId);
+            if (selectElement) {
+                selectElement.innerHTML = '';
+                // Add an "All" option for dashboard supplier filter
+                if (selectId === 'supplierPerformanceSelect') {
+                    const allOption = document.createElement('option');
+                    allOption.value = '';
+                    allOption.textContent = 'အားလုံး';
+                    selectElement.appendChild(allOption);
+                }
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.SupplierID;
+                    option.textContent = supplier.SupplierName;
+                    selectElement.appendChild(option);
+                });
+                if (suppliers.length > 0 && selectId !== 'supplierPerformanceSelect') {
+                    selectElement.value = suppliers[0].SupplierID;
+                }
+            }
+        }
+
+        // --- Form Validation Helper ---
+        function validateInput(inputId, errorId, message) {
+            const input = document.getElementById(inputId);
+            const errorElement = document.getElementById(errorId);
+            if (!input.value.trim() || (input.type === 'number' && isNaN(parseFloat(input.value)))) {
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
+                input.classList.add('border-red-500');
+                return false;
+            } else {
+                errorElement.classList.add('hidden');
+                input.classList.remove('border-red-500');
+                return true;
+            }
+        }
+
+        // --- CRUD Operations for Fuel Types ---
+        async function addFuelType() {
+            const isValidFuelName = validateInput('fuelName', 'fuelNameError', 'ဆီအမည်လိုအပ်ပါသည်။');
+            const isValidFuelUnit = validateInput('fuelUnit', 'fuelUnitError', 'ယူနစ်လိုအပ်ပါသည်။');
+            if (!isValidFuelName || !isValidFuelUnit) return;
+
+            const fuelName = document.getElementById('fuelName').value;
+            const unit = document.getElementById('fuelUnit').value;
+
+            showLoading();
+            try {
+                await callApi('/fueltypes', 'POST', { FuelName: fuelName, Unit: unit });
+                showMessage('အောင်မြင်ပါသည်', 'ဆီအမျိုးအစား အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။', 'success');
+                loadFuelTypes();
+                document.getElementById('fuel-type-form').reset();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ဆီအမျိုးအစား ထည့်သွင်းရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updateFuelType() {
+            const selectedRow = document.querySelector('#fuel-types-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ပြင်ဆင်ရန် ဆီအမျိုးအစားကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const fuelId = parseInt(selectedRow.dataset.fuelId);
+            const isValidFuelName = validateInput('fuelName', 'fuelNameError', 'ဆီအမည်လိုအပ်ပါသည်။');
+            const isValidFuelUnit = validateInput('fuelUnit', 'fuelUnitError', 'ယူနစ်လိုအပ်ပါသည်။');
+            if (!isValidFuelName || !isValidFuelUnit) return;
+
+            const fuelName = document.getElementById('fuelName').value;
+            const unit = document.getElementById('fuelUnit').value;
+
+            showLoading();
+            try {
+                await callApi(`/fueltypes/${fuelId}`, 'PUT', { FuelName: fuelName, Unit: unit });
+                showMessage('အောင်မြင်ပါသည်', 'ဆီအမျိုးအစား အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။', 'success');
+                loadFuelTypes();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ဆီအမျိုးအစား ပြင်ဆင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteFuelType() {
+            const selectedRow = document.querySelector('#fuel-types-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ဖျက်ရန် ဆီအမျိုးအစားကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const fuelId = parseInt(selectedRow.dataset.fuelId);
+
+            showConfirm('အတည်ပြုပါ', 'ဤဆီအမျိုးအစားကို ဖျက်ရန် သေချာပါသလား။ (မှတ်ချက်: ဤဆီအမျိုးအစားနှင့် သက်ဆိုင်သော လက်ကျန်၊ ဈေးနှုန်း၊ ဖြည့်သွင်းမှုနှင့် သုံးစွဲမှုမှတ်တမ်းများပါ ဖျက်ပါမည်။)', async () => {
+                showLoading();
+                try {
+                    await callApi(`/fueltypes/${fuelId}`, 'DELETE');
+                    showMessage('အောင်မြင်ပါသည်', 'ဆီအမျိုးအစား အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။', 'success');
+                    loadFuelTypes();
+                } catch (error) {
+                    showMessage('အမှား', error.message || 'ဆီအမျိုးအစား ဖျက်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+
+        document.getElementById('fuel-types-table').addEventListener('click', (event) => {
+            const row = event.target.closest('tr');
+            if (row && row.dataset.fuelId) {
+                document.querySelectorAll('#fuel-types-table tbody .selected-row').forEach(r => r.classList.remove('selected-row'));
+                row.classList.add('selected-row');
+                const fuelData = fuelTypes.find(f => f.FuelID === parseInt(row.dataset.fuelId));
+                if (fuelData) {
+                    document.getElementById('fuelName').value = fuelData.FuelName;
+                    document.getElementById('fuelUnit').value = fuelData.Unit;
+                }
+            }
+        });
+
+        // --- CRUD Operations for Sites ---
+        async function addSite() {
+            const isValidSiteId = validateInput('siteIdInput', 'siteIdInputError', 'Site ID လိုအပ်ပါသည်။');
+            const isValidSiteName = validateInput('siteName', 'siteNameError', 'Site အမည်လိုအပ်ပါသည်။');
+            if (!isValidSiteId || !isValidSiteName) return;
+
+            const siteIdInput = document.getElementById('siteIdInput').value;
+            const siteName = document.getElementById('siteName').value;
+            const stateDivision = document.getElementById('stateDivision').value;
+            const township = document.getElementById('township').value;
+
+            showLoading();
+            try {
+                await callApi('/sites', 'POST', { Site_ID: siteIdInput, SiteName: siteName, StateDivision: stateDivision, Township: township });
+                showMessage('အောင်မြင်ပါသည်', 'Site အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။', 'success');
+                loadSites();
+                document.getElementById('site-form').reset();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'Site ထည့်သွင်းရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updateSite() {
+            const selectedRow = document.querySelector('#sites-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ပြင်ဆင်ရန် Site ကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const siteId = selectedRow.dataset.siteId;
+            const isValidSiteName = validateInput('siteName', 'siteNameError', 'Site အမည်လိုအပ်ပါသည်။');
+            if (!isValidSiteName) return;
+
+            const siteName = document.getElementById('siteName').value;
+            const stateDivision = document.getElementById('stateDivision').value;
+            const township = document.getElementById('township').value;
+
+            showLoading();
+            try {
+                await callApi(`/sites/${siteId}`, 'PUT', { SiteName: siteName, StateDivision: stateDivision, Township: township });
+                showMessage('အောင်မြင်ပါသည်', 'Site အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။', 'success');
+                loadSites();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'Site ပြင်ဆင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteSite() {
+            const selectedRow = document.querySelector('#sites-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ဖျက်ရန် Site ကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const siteId = selectedRow.dataset.siteId;
+
+            showConfirm('အတည်ပြုပါ', 'ဤ Site ကို ဖျက်ရန် သေချာပါသလား။ (မှတ်ချက်: ဤ Site နှင့် သက်ဆိုင်သော ဆီလက်ကျန်၊ ဈေးနှုန်း၊ ဖြည့်သွင်းမှုနှင့် သုံးစွဲမှုမှတ်တမ်းများပါ ဖျက်ပါမည်။)', async () => {
+                showLoading();
+                try {
+                    await callApi(`/sites/${siteId}`, 'DELETE');
+                    showMessage('အောင်မြင်ပါသည်', 'Site အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။', 'success');
+                    loadSites();
+                } catch (error) {
+                    showMessage('အမှား', error.message || 'Site ဖျက်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+
+        document.getElementById('sites-table').addEventListener('click', (event) => {
+            const row = event.target.closest('tr');
+            if (row && row.dataset.siteId) {
+                document.querySelectorAll('#sites-table tbody .selected-row').forEach(r => r.classList.remove('selected-row'));
+                row.classList.add('selected-row');
+                const siteData = sites.find(s => s.Site_ID === row.dataset.siteId);
+                if (siteData) {
+                    document.getElementById('siteIdInput').value = siteData.Site_ID;
+                    document.getElementById('siteName').value = siteData.SiteName;
+                    document.getElementById('stateDivision').value = siteData.State_Division || '';
+                    document.getElementById('township').value = siteData.Township || '';
+                }
+            }
+        });
+
+        // --- CRUD Operations for Suppliers ---
+        async function addSupplier() {
+            const isValidSupplierName = validateInput('supplierName', 'supplierNameError', 'ပေးသွင်းသူအမည်လိုအပ်ပါသည်။');
+            if (!isValidSupplierName) return;
+
+            const supplierName = document.getElementById('supplierName').value;
+            const contactPerson = document.getElementById('contactPerson').value;
+            const contactPhone = document.getElementById('contactPhone').value;
+            const contactEmail = document.getElementById('contactEmail').value;
+            const address = document.getElementById('supplierAddress').value;
+
+            showLoading();
+            try {
+                await callApi('/suppliers', 'POST', {
+                    SupplierName: supplierName,
+                    ContactPerson: contactPerson,
+                    ContactPhone: contactPhone,
+                    ContactEmail: contactEmail,
+                    Address: address
+                });
+                showMessage('အောင်မြင်ပါသည်', 'ပေးသွင်းသူ အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။', 'success');
+                loadSuppliers();
+                document.getElementById('supplier-form').reset();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ပေးသွင်းသူ ထည့်သွင်းရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updateSupplier() {
+            const selectedRow = document.querySelector('#suppliers-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ပြင်ဆင်ရန် ပေးသွင်းသူကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const supplierId = parseInt(selectedRow.dataset.supplierId);
+            const isValidSupplierName = validateInput('supplierName', 'supplierNameError', 'ပေးသွင်းသူအမည်လိုအပ်ပါသည်။');
+            if (!isValidSupplierName) return;
+
+            const supplierName = document.getElementById('supplierName').value;
+            const contactPerson = document.getElementById('contactPerson').value;
+            const contactPhone = document.getElementById('contactPhone').value;
+            const contactEmail = document.getElementById('contactEmail').value;
+            const address = document.getElementById('supplierAddress').value;
+
+            showLoading();
+            try {
+                await callApi(`/suppliers/${supplierId}`, 'PUT', {
+                    SupplierName: supplierName,
+                    ContactPerson: contactPerson,
+                    ContactPhone: contactPhone,
+                    ContactEmail: contactEmail,
+                    Address: address
+                });
+                showMessage('အောင်မြင်ပါသည်', 'ပေးသွင်းသူ အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။', 'success');
+                loadSuppliers();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ပေးသွင်းသူ ပြင်ဆင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function deleteSupplier() {
+            const selectedRow = document.querySelector('#suppliers-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ဖျက်ရန် ပေးသွင်းသူကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const supplierId = parseInt(selectedRow.dataset.supplierId);
+
+            showConfirm('အတည်ပြုပါ', 'ဤပေးသွင်းသူကို ဖျက်ရန် သေချာပါသလား။ (မှတ်ချက်: ဤပေးသွင်းသူနှင့် သက်ဆိုင်သော ဖြည့်သွင်းမှုမှတ်တမ်းများ ရှိပါက ဖျက်၍မရပါ။)', async () => {
+                showLoading();
+                try {
+                    await callApi(`/suppliers/${supplierId}`, 'DELETE');
+                    showMessage('အောင်မြင်ပါသည်', 'ပေးသွင်းသူ အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။', 'success');
+                    loadSuppliers();
+                } catch (error) {
+                    showMessage('အမှား', error.message || 'ပေးသွင်းသူ ဖျက်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+                } finally {
+                    hideLoading();
+                }
+            });
+        }
+
+        document.getElementById('suppliers-table').addEventListener('click', (event) => {
+            const row = event.target.closest('tr');
+            if (row && row.dataset.supplierId) {
+                document.querySelectorAll('#suppliers-table tbody .selected-row').forEach(r => r.classList.remove('selected-row'));
+                row.classList.add('selected-row');
+                const supplierData = suppliers.find(s => s.SupplierID === parseInt(row.dataset.supplierId));
+                if (supplierData) {
+                    document.getElementById('supplierName').value = supplierData.SupplierName;
+                    document.getElementById('contactPerson').value = supplierData.ContactPerson || '';
+                    document.getElementById('contactPhone').value = supplierData.ContactPhone || '';
+                    document.getElementById('contactEmail').value = supplierData.ContactEmail || '';
+                    document.getElementById('supplierAddress').value = supplierData.Address || '';
+                }
+            }
+        });
+
+        // --- CRUD Operations for Fuel Prices ---
+        async function addFuelPrice() {
+            const isValidEffectiveDate = validateInput('effectiveDate', 'effectiveDateError', 'ရက်စွဲလိုအပ်ပါသည်။');
+            const isValidPricePerUnit = validateInput('pricePerUnit', 'pricePerUnitError', 'ယူနစ်ဈေးနှုန်းလိုအပ်ပါသည်။');
+            if (!isValidEffectiveDate || !isValidPricePerUnit) return;
+
+            const fuelId = parseInt(document.getElementById('priceFuelSelect').value);
+            const siteId = document.getElementById('priceSiteSelect').value;
+            const effectiveDate = document.getElementById('effectiveDate').value;
+            const pricePerUnit = parseFloat(document.getElementById('pricePerUnit').value);
+
+            showLoading();
+            try {
+                const isoEffectiveDate = new Date(effectiveDate).toISOString().slice(0, 19);
+                await callApi('/fuelprices', 'POST', {
+                    FuelID: fuelId,
+                    Site_ID: siteId,
+                    EffectiveDate: isoEffectiveDate,
+                    PricePerUnit: pricePerUnit
+                });
+                showMessage('အောင်မြင်ပါသည်', 'ဆီဈေးနှုန်း အောင်မြင်စွာ ထည့်သွင်း/ပြင်ဆင်ပြီးပါပြီ။', 'success');
+                loadFuelPrices();
+                document.getElementById('fuel-price-form').reset();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ဆီဈေးနှုန်း ထည့်သွင်းရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updateFuelPrice() {
+            const selectedRow = document.querySelector('#fuel-prices-table tbody .selected-row');
+            if (!selectedRow) {
+                showMessage('သတိပေးချက်', 'ပြင်ဆင်ရန် ဆီဈေးနှုန်းကို ရွေးချယ်ပါ။', 'info');
+                return;
+            }
+            const fuelPriceId = parseInt(selectedRow.dataset.fuelPriceId);
+            const isValidEffectiveDate = validateInput('effectiveDate', 'effectiveDateError', 'ရက်စွဲလိုအပ်ပါသည်။');
+            const isValidPricePerUnit = validateInput('pricePerUnit', 'pricePerUnitError', 'ယူနစ်ဈေးနှုန်းလိုအပ်ပါသည်။');
+            if (!isValidEffectiveDate || !isValidPricePerUnit) return;
+
+            const fuelId = parseInt(document.getElementById('priceFuelSelect').value);
+            const siteId = document.getElementById('priceSiteSelect').value;
+            const effectiveDate = document.getElementById('effectiveDate').value;
+            const pricePerUnit = parseFloat(document.getElementById('pricePerUnit').value);
+
+            showLoading();
+            try {
+                const isoEffectiveDate = new Date(effectiveDate).toISOString().slice(0, 19);
+                await callApi(`/fuelprices/${fuelPriceId}`, 'PUT', {
+                    FuelID: fuelId,
+                    Site_ID: siteId,
+                    EffectiveDate: isoEffectiveDate,
+                    PricePerUnit: pricePerUnit
+                });
+                showMessage('အောင်မြင်ပါသည်', 'ဆီဈေးနှုန်း အောင်မြင်စွာ ပြင်ဆင်ပြီးပါပြီ။', 'success');
+                loadFuelPrices();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ဆီဈေးနှုန်း ပြင်ဆင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        document.getElementById('fuel-prices-table').addEventListener('click', (event) => {
+            const row = event.target.closest('tr');
+            if (row && row.dataset.fuelPriceId) {
+                document.querySelectorAll('#fuel-prices-table tbody .selected-row').forEach(r => r.classList.remove('selected-row'));
+                row.classList.add('selected-row');
+                const fuelPriceData = fuelPrices.find(fp => fp.FuelPriceID === parseInt(row.dataset.fuelPriceId));
+                if (fuelPriceData) {
+                    document.getElementById('priceSiteSelect').value = fuelPriceData.Site_ID;
+                    document.getElementById('priceFuelSelect').value = fuelPriceData.FuelID;
+                    const date = new Date(fuelPriceData.EffectiveDate);
+                    document.getElementById('effectiveDate').value = date.toISOString().split('T')[0];
+                    document.getElementById('pricePerUnit').value = fuelPriceData.PricePerUnit;
+                }
+            }
+        });
+
+        // --- Site Stock Level Management ---
+        async function addOrUpdateSiteStock() {
+            const isValidBalance = validateInput('stockBalance', 'stockBalanceError', 'လက်ကျန်လိုအပ်ပါသည်။');
+            const isValidMinStock = validateInput('minStockLevelSite', 'minStockLevelSiteError', 'အနည်းဆုံးလက်ကျန်လိုအပ်ပါသည်။');
+            const isValidConsumption = validateInput('consumptionRatePerHour', 'consumptionRatePerHourError', 'ဆီစားနှုန်းလိုအပ်ပါသည်။');
+            if (!isValidBalance || !isValidMinStock || !isValidConsumption) return;
+
+            const siteId = document.getElementById('stockSiteSelect').value;
+            const fuelId = parseInt(document.getElementById('stockFuelSelect').value);
+            const balance = parseFloat(document.getElementById('stockBalance').value);
+            const minStockLevelSite = parseFloat(document.getElementById('minStockLevelSite').value);
+            const consumptionRatePerHour = parseFloat(document.getElementById('consumptionRatePerHour').value);
+
+            showLoading();
+            try {
+                await callApi('/fuelstock', 'POST', {
+                    FuelID: fuelId,
+                    Site_ID: siteId,
+                    Balance: balance,
+                    MinStockLevel_Site: minStockLevelSite,
+                    ConsumptionRatePerHour: consumptionRatePerHour
+                });
+                showMessage('အောင်မြင်ပါသည်', 'Site အလိုက် လက်ကျန်အဆင့် အောင်မြင်စွာ ထည့်သွင်း/ပြင်ဆင်ပြီးပါပြီ။', 'success');
+                loadSiteStockLevels();
+            } catch (error) {
+                showMessage('အမှား', error.message || 'Site အလိုက် လက်ကျန်အဆင့် စီမံခန့်ခွဲရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        document.getElementById('site-stock-table').addEventListener('click', (event) => {
+            const row = event.target.closest('tr');
+            if (row && row.dataset.stockId) {
+                document.querySelectorAll('#site-stock-table tbody .selected-row').forEach(r => r.classList.remove('selected-row'));
+                row.classList.add('selected-row');
+                const stockData = siteStocks.find(s => s.StockID === parseInt(row.dataset.stockId));
+                if (stockData) {
+                    document.getElementById('stockSiteSelect').value = stockData.Site_ID;
+                    document.getElementById('stockFuelSelect').value = stockData.FuelID;
+                    document.getElementById('stockBalance').value = stockData.Balance;
+                    document.getElementById('minStockLevelSite').value = stockData.MinStockLevel_Site;
+                    document.getElementById('consumptionRatePerHour').value = stockData.ConsumptionRatePerHour;
+                }
+            }
+        });
+
+        // --- Refill Needs ---
+        async function loadStatesForRefillNeeds() {
+            if (sites.length === 0) sites = await callApi('/sites');
+            const stateSelect = document.getElementById('refillNeedsStateDivision');
+            stateSelect.innerHTML = '<option value="">အားလုံး</option>';
+            const uniqueStates = [...new Set(sites.map(s => s.State_Division).filter(Boolean))];
+            uniqueStates.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateSelect.appendChild(option);
+            });
+        }
+
+        function loadTownshipsForRefillNeeds() {
+            const stateSelect = document.getElementById('refillNeedsStateDivision');
+            const townshipSelect = document.getElementById('refillNeedsTownship');
+            const selectedState = stateSelect.value;
+
+            townshipSelect.innerHTML = '<option value="">အားလုံး</option>';
+            let filteredSites = sites;
+            if (selectedState) {
+                filteredSites = sites.filter(s => s.State_Division === selectedState);
+            }
+            const uniqueTownships = [...new Set(filteredSites.map(s => s.Township).filter(Boolean))];
+            uniqueTownships.forEach(township => {
+                const option = document.createElement('option');
+                option.value = township;
+                option.textContent = township;
+                townshipSelect.appendChild(option);
+            });
+        }
+
+        async function checkRefillNeeds() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+                siteStocks = await callApi('/fuelstock');
+
+                const selectedState = document.getElementById('refillNeedsStateDivision').value;
+                const selectedTownship = document.getElementById('refillNeedsTownship').value;
+                const estimatedDays = parseFloat(document.getElementById('estimatedDaysForProjection').value || 0);
+
+                if (isNaN(estimatedDays) || estimatedDays < 0) {
+                    document.getElementById('refill-needs-message').textContent = 'ခန့်မှန်းခြေ လည်ပတ်မည့်ရက်ကို မှန်ကန်စွာ ထည့်သွင်းပါ။';
+                    renderTable([], 'refill-needs-table', ['Site_ID', 'SiteName', 'FuelName', 'Balance', 'MinStockLevel_Site', 'ConsumptionRatePerHour', 'EstimatedNeeded']);
+                    document.getElementById('total-refill-needs-display').innerHTML = '';
+                    return;
+                }
+
+                let filteredStocks = siteStocks;
+                if (selectedState) {
+                    filteredStocks = filteredStocks.filter(s => {
+                        const site = sites.find(st => st.Site_ID === s.Site_ID);
+                        return site && site.State_Division === selectedState;
+                    });
+                }
+                if (selectedTownship) {
+                    filteredStocks = filteredStocks.filter(s => {
+                        const site = sites.find(st => st.Site_ID === s.Site_ID);
+                        return site && site.Township === selectedTownship;
+                    });
+                }
+
+                const needs = [];
+                let totalNeededQuantities = {};
+
+                filteredStocks.forEach(s => {
+                    const fuel = fuelTypes.find(f => f.FuelID === s.FuelID);
+                    const site = sites.find(st => st.Site_ID === s.Site_ID);
+                    
+                    if (!fuel || !site) return; // Skip if fuel or site data is missing
+
+                    const projectedConsumption = s.ConsumptionRatePerHour * 24 * estimatedDays;
+                    // Needed to reach min stock + cover projected consumption
+                    let neededQuantity = Math.max(0, (s.MinStockLevel_Site + projectedConsumption) - s.Balance);
+
+                    if (neededQuantity > 0) {
+                        needs.push({
+                            Site_ID: s.Site_ID,
+                            SiteName: site.SiteName,
+                            FuelName: fuel.FuelName,
+                            FuelID: s.FuelID,
+                            Balance: s.Balance,
+                            MinStockLevel_Site: s.MinStockLevel_Site,
+                            ConsumptionRatePerHour: s.ConsumptionRatePerHour,
+                            EstimatedNeeded: neededQuantity
+                        });
+
+                        if (!totalNeededQuantities[fuel.FuelName]) {
+                            totalNeededQuantities[fuel.FuelName] = 0;
+                        }
+                        totalNeededQuantities[fuel.FuelName] += neededQuantity;
+                    }
+                });
+
+                renderTable(needs, 'refill-needs-table', ['Site_ID', 'SiteName', 'FuelName', 'Balance', 'MinStockLevel_Site', 'ConsumptionRatePerHour', 'EstimatedNeeded', 'Action']);
+                
+                const messageElement = document.getElementById('refill-needs-message');
+                if (needs.length === 0) {
+                    messageElement.textContent = 'ဆီဖြည့်သွင်းရန်မလိုအပ်သေးပါ (မည်သည့် Site တွင်မှ)';
+                } else {
+                    messageElement.textContent = '';
+                }
+
+                // Display total needed quantities
+                const totalNeedsDisplay = document.getElementById('total-refill-needs-display');
+                totalNeedsDisplay.innerHTML = '';
+                for (const fuelName in totalNeededQuantities) {
+                    const p = document.createElement('p');
+                    p.innerHTML = `<span class="font-bold">${fuelName}:</span> ${totalNeededQuantities[fuelName].toFixed(2)} လီတာ`;
+                    totalNeedsDisplay.appendChild(p);
+                }
+
+            } catch (error) {
+                showMessage('အမှား', 'ဆီဖြည့်သွင်းရန်လိုအပ်မှုများ စစ်ဆေးရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        // --- Add to Refill Plan ---
+        function addToRefillPlan(siteId, fuelId, quantity) {
+            document.getElementById('planSiteSelect').value = siteId;
+            document.getElementById('planFuelSelect').value = fuelId;
+            document.getElementById('planQuantity').value = quantity.toFixed(2);
+            document.getElementById('planDate').valueAsDate = new Date();
+
+            showSection('refill-plan-section');
+            calculateEstimatedCost();
+            updateEstimatedRefillTime();
+        }
+
+        // --- Record Refill ---
+        async function recordRefill() {
+            const isValidQuantity = validateInput('refillQuantity', 'refillQuantityError', 'ပမာဏလိုအပ်ပါသည်။');
+            const isValidUnitPrice = validateInput('refillUnitPrice', 'refillUnitPriceError', 'ယူနစ်ဈေးနှုန်းလိုအပ်ပါသည်။');
+            const isValidRefillDate = validateInput('refillDate', 'refillDateError', 'ရက်စွဲလိုအပ်ပါသည်။');
+            if (!isValidQuantity || !isValidUnitPrice || !isValidRefillDate) return;
+
+            const fuelId = parseInt(document.getElementById('refillFuelSelect').value);
+            const siteId = document.getElementById('refillSiteSelect').value;
+            const sourceSiteId = document.getElementById('refillSourceSiteSelect').value;
+            const supplierId = parseInt(document.getElementById('refillSupplierSelect').value);
+            const quantity = parseFloat(document.getElementById('refillQuantity').value);
+            const unitCost = parseFloat(document.getElementById('refillUnitPrice').value);
+            const transportationCost = parseFloat(document.getElementById('transportationCost').value || 0);
+            const loadingUnloadingCost = parseFloat(document.getElementById('loadingUnloadingCost').value || 0);
+            const refillDate = document.getElementById('refillDate').value;
+
+            if (quantity <= 0) {
+                showMessage('သတိပေးချက်', 'ပမာဏသည် သုညထက် ကြီးရပါမည်။', 'info');
+                return;
+            }
+
+            const finalSourceSiteId = sourceSiteId === '' ? null : sourceSiteId;
+            const isoRefillDate = new Date(refillDate).toISOString().slice(0, 19);
+
+            showLoading();
+            try {
+                const result = await callApi('/refills', 'POST', {
+                    FuelID: fuelId,
+                    Site_ID: siteId,
+                    SourceSite_ID: finalSourceSiteId,
+                    SupplierID: supplierId,
+                    Quantity: quantity,
+                    UnitCost: unitCost,
+                    TransportationCost: transportationCost,
+                    LoadingUnloadingCost: loadingUnloadingCost,
+                    RefillDate: isoRefillDate
+                });
+                if (result) {
+                    showMessage('အောင်မြင်ပါသည်', 'ဆီဖြည့်သွင်းမှု အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ။', 'success');
+                    document.getElementById('refill-form').reset();
+                    document.getElementById('refillDate').valueAsDate = new Date();
+                    loadSiteStockLevels();
+                    checkRefillNeeds();
+                }
+            } catch (error) {
+                showMessage('အမှား', error.message || 'ဆီဖြည့်သွင်းမှု မှတ်တမ်းတင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Record Usage ---
+        async function recordUsage() {
+            const isValidQuantity = validateInput('usageQuantity', 'usageQuantityError', 'ပမာဏလိုအပ်ပါသည်။');
+            const isValidDepartment = validateInput('usageDepartment', 'usageDepartmentError', 'ဌာနလိုအပ်ပါသည်။');
+            const isValidPurpose = validateInput('usagePurpose', 'usagePurposeError', 'ရည်ရွယ်ချက်လိုအပ်ပါသည်။');
+            const isValidUsageDate = validateInput('usageDate', 'usageDateError', 'ရက်စွဲလိုအပ်ပါသည်။');
+            if (!isValidQuantity || !isValidDepartment || !isValidPurpose || !isValidUsageDate) return;
+
+            const fuelId = parseInt(document.getElementById('usageFuelSelect').value);
+            const siteId = document.getElementById('usageSiteSelect').value;
+            const quantity = parseFloat(document.getElementById('usageQuantity').value);
+            const department = document.getElementById('usageDepartment').value;
+            const purpose = document.getElementById('usagePurpose').value;
+            const usageDate = document.getElementById('usageDate').value;
+
+            if (quantity <= 0) {
+                showMessage('သတိပေးချက်', 'ပမာဏသည် သုညထက် ကြီးရပါမည်။', 'info');
+                return;
+            }
+
+            const isoUsageDate = new Date(usageDate).toISOString().slice(0, 19);
+
+            showLoading();
+            try {
+                const result = await callApi('/usages', 'POST', {
+                    FuelID: fuelId,
+                    Site_ID: siteId,
+                    Department: department,
+                    Quantity: quantity,
+                    Purpose: purpose,
+                    UsageDate: isoUsageDate
+                });
+                if (result) {
+                    showMessage('အောင်မြင်ပါသည်', 'ဆီသုံးစွဲမှု အောင်မြင်စွာ မှတ်တမ်းတင်ပြီးပါပြီ။', 'success');
+                    document.getElementById('usage-form').reset();
+                    document.getElementById('usageDate').valueAsDate = new Date();
+                    loadSiteStockLevels();
+                    checkRefillNeeds();
+                }
+            } catch (error) {
+                if (error.message.includes('Insufficient stock')) {
+                    showMessage('အမှား', 'ဤ Site တွင် လိုအပ်သော ဆီလက်ကျန်မလုံလောက်ပါ။', 'error');
+                } else {
+                    showMessage('အမှား', error.message || 'ဆီသုံးစွဲမှု မှတ်တမ်းတင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။', 'error');
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Check Current Stock ---
+        async function checkCurrentStock() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+                siteStocks = await callApi('/fuelstock');
+
+                const dataForTable = siteStocks.map(s => {
+                    const fuel = fuelTypes.find(f => f.FuelID === s.FuelID);
+                    const site = sites.find(st => st.Site_ID === s.Site_ID);
+                    return {
+                        Site_ID: s.Site_ID,
+                        SiteName: site ? site.SiteName : 'N/A',
+                        FuelName: fuel ? fuel.FuelName : 'N/A',
+                        Unit: fuel ? fuel.Unit : 'N/A',
+                        Balance: s.Balance,
+                        MinStockLevel_Site: s.MinStockLevel_Site,
+                        ConsumptionRatePerHour: s.ConsumptionRatePerHour,
+                        LastUpdated: s.LastUpdated
+                    };
+                });
+                renderTable(dataForTable, 'current-stock-table', ['Site_ID', 'SiteName', 'FuelName', 'Unit', 'Balance', 'MinStockLevel_Site', 'ConsumptionRatePerHour', 'LastUpdated']);
+            } catch (error) {
+                showMessage('အမှား', 'လက်ကျန်ဆီစစ်ဆေးရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        // --- Refill Plan ---
+        async function calculateEstimatedCost() {
+            const isValidQuantity = validateInput('planQuantity', 'planQuantityError', 'ပမာဏလိုအပ်ပါသည်။');
+            const isValidPlanDate = validateInput('planDate', 'planDateError', 'ရက်စွဲလိုအပ်ပါသည်။');
+            if (!isValidQuantity || !isValidPlanDate) {
+                document.getElementById('estimatedCost').textContent = 'ခန့်မှန်းကုန်ကျစရိတ်: 0.00 ကျပ်';
+                return;
+            }
+
+            const fuelId = parseInt(document.getElementById('planFuelSelect').value);
+            const siteId = document.getElementById('planSiteSelect').value;
+            const quantity = parseFloat(document.getElementById('planQuantity').value);
+            const estimatedCostLabel = document.getElementById('estimatedCost');
+
+            if (isNaN(fuelId) || !siteId || isNaN(quantity) || quantity <= 0) {
+                estimatedCostLabel.textContent = 'ခန့်မှန်းကုန်ကျစရိတ်: 0.00 ကျပ်';
+                return;
+            }
+
+            try {
+                const planDate = document.getElementById('planDate').value;
+                const isoPlanDate = new Date(planDate).toISOString().slice(0, 19);
+
+                const response = await callApi(`/fuelprices?fuel_id=${fuelId}&site_id=${siteId}&effective_date=${isoPlanDate}`);
+                let unitPrice = 0;
+                if (response && response.length > 0 && typeof response[0].PricePerUnit === 'number') {
+                    unitPrice = response[0].PricePerUnit;
+                } else {
+                    showMessage('သတိပေးချက်', 'ဤဆီအမျိုးအစားနှင့် Site အတွက် စီစဉ်သည့်ရက်စွဲတွင် ဈေးနှုန်းမရှိသေးပါ။', 'info');
+                }
+                
+                const cost = quantity * unitPrice;
+                estimatedCostLabel.textContent = `ခန့်မှန်းကုန်ကျစရိတ်: ${cost.toFixed(2)} ကျပ်`;
+
+            } catch (error) {
+                console.error('Error calculating estimated cost:', error);
+                estimatedCostLabel.textContent = 'ခန့်မှန်းကုန်ကျစရိတ်: (အမှား)';
+                showMessage('အမှား', 'ခန့်မှန်းကုန်ကျစရိတ် တွက်ချက်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function updateEstimatedRefillTime() {
+            const fuelId = parseInt(document.getElementById('planFuelSelect').value);
+            const siteId = document.getElementById('planSiteSelect').value;
+            const estimatedRefillTimeLabel = document.getElementById('estimatedRefillTime');
+
+            if (isNaN(fuelId) || !siteId) {
+                estimatedRefillTimeLabel.textContent = 'ခန့်မှန်းခြေ ဆီဖြည့်ရန်အချိန်: N/A';
+                return;
+            }
+
+            const stock = siteStocks.find(s => s.FuelID === fuelId && s.Site_ID === siteId);
+            if (stock && stock.ConsumptionRatePerHour > 0) {
+                const daysUntilMinStock = (stock.Balance - stock.MinStockLevel_Site) / (stock.ConsumptionRatePerHour * 24);
+                if (daysUntilMinStock > 0) {
+                    estimatedRefillTimeLabel.textContent = `ခန့်မှန်းခြေ ဆီဖြည့်ရန်အချိန်: ${daysUntilMinStock.toFixed(1)} ရက်`;
+                } else {
+                    estimatedRefillTimeLabel.textContent = `ခန့်မှန်းခြေ ဆီဖြည့်ရန်အချိန်: ချက်ချင်းလိုအပ်ပါသည်။`;
+                }
+            } else {
+                estimatedRefillTimeLabel.textContent = 'ခန့်မှန်းခြေ ဆီဖြည့်ရန်အချိန်: N/A (ဆီစားနှုန်းမရှိပါ သို့မဟုတ် သုညဖြစ်နေသည်)';
+            }
+        }
+
+        async function loadRefillPlanNeeds() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+                siteStocks = await callApi('/fuelstock');
+
+                const needs = siteStocks.filter(s => s.Balance < s.MinStockLevel_Site || s.Balance < s.MinStockLevel_Site * 1.2);
+                const dataForTable = needs.map(s => {
+                    const fuel = fuelTypes.find(f => f.FuelID === s.FuelID);
+                    const site = sites.find(st => st.Site_ID === s.Site_ID);
+                    const neededQuantity = Math.max(0, s.MinStockLevel_Site - s.Balance);
+                    return {
+                        Site_ID: s.Site_ID,
+                        SiteName: site ? site.SiteName : 'N/A',
+                        FuelName: fuel ? fuel.FuelName : 'N/A',
+                        Balance: s.Balance,
+                        MinStockLevel_Site: s.MinStockLevel_Site,
+                        ConsumptionRatePerHour: s.ConsumptionRatePerHour,
+                        Needed: neededQuantity
+                    };
+                });
+                renderTable(dataForTable, 'refill-plan-table', ['Site_ID', 'SiteName', 'FuelName', 'Balance', 'MinStockLevel_Site', 'ConsumptionRatePerHour', 'Needed']);
+            } catch (error) {
+                showMessage('အမှား', 'ဆီဖြည့်သွင်းစီမံကိန်းလိုအပ်မှုများ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        // --- Reports ---
+        async function loadRefillHistory() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+                if (suppliers.length === 0) suppliers = await callApi('/suppliers');
+                refillHistory = await callApi('/refillhistory'); // Store for filtering
+                const dataForTable = refillHistory.map(r => {
+                    return {
+                        RefillID: r.RefillID,
+                        TransactionID: r.TransactionID,
+                        FuelName: r.FuelName,
+                        DestinationSiteName: r.DestinationSiteName,
+                        SourceSiteName: r.SourceSiteName || 'ပြင်ပပေးသွင်းသူ',
+                        SupplierName: r.SupplierName || 'N/A',
+                        Quantity: r.Quantity,
+                        UnitCost: r.UnitCost,
+                        TransportationCost: r.TransportationCost,
+                        LoadingUnloadingCost: r.LoadingUnloadingCost,
+                        TotalCost: r.TotalCost,
+                        RefillDate: r.RefillDate
+                    };
+                });
+                renderTable(dataForTable, 'refill-history-table', ['RefillID', 'TransactionID', 'FuelName', 'DestinationSiteName', 'SourceSiteName', 'SupplierName', 'Quantity', 'UnitCost', 'TransportationCost', 'LoadingUnloadingCost', 'TotalCost', 'RefillDate']);
+            } catch (error) {
+                showMessage('အမှား', 'ဆီဖြည့်သွင်းမှုမှတ်တမ်း တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadUsageHistory() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/api/sites');
+                usageHistory = await callApi('/usagehistory'); // Store for filtering
+                const dataForTable = usageHistory.map(u => {
+                    return {
+                        UsageID: u.UsageID,
+                        TransactionID: u.TransactionID,
+                        FuelName: u.FuelName,
+                        SiteName: u.SiteName,
+                        Department: u.Department,
+                        Quantity: u.Quantity,
+                        UsageDate: u.UsageDate,
+                        Purpose: u.Purpose
+                    };
+                });
+                renderTable(dataForTable, 'usage-history-table', ['UsageID', 'TransactionID', 'FuelName', 'SiteName', 'Department', 'Quantity', 'UsageDate', 'Purpose']);
+            } catch (error) {
+                showMessage('အမှား', 'ဆီသုံးစွဲမှုမှတ်တမ်း တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        async function loadCurrentStockReport() {
+            try {
+                if (fuelTypes.length === 0) fuelTypes = await callApi('/fueltypes');
+                if (sites.length === 0) sites = await callApi('/sites');
+                siteStocks = await callApi('/fuelstock');
+
+                const dataForTable = siteStocks.map(s => {
+                    const fuel = fuelTypes.find(f => f.FuelID === s.FuelID);
+                    const site = sites.find(st => st.Site_ID === s.Site_ID);
+                    return {
+                        Site_ID: s.Site_ID,
+                        SiteName: site ? site.SiteName : 'N/A',
+                        FuelName: fuel ? fuel.FuelName : 'N/A',
+                        Unit: fuel ? fuel.Unit : 'N/A',
+                        Balance: s.Balance,
+                        MinStockLevel_Site: s.MinStockLevel_Site,
+                        ConsumptionRatePerHour: s.ConsumptionRatePerHour,
+                        LastUpdated: s.LastUpdated
+                    };
+                });
+                renderTable(dataForTable, 'stock-report-table', ['Site_ID', 'SiteName', 'FuelName', 'Unit', 'Balance', 'MinStockLevel_Site', 'ConsumptionRatePerHour', 'LastUpdated']);
+            } catch (error) {
+                showMessage('အမှား', 'လက်ကျန်ဆီလက်ကျန် report တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n' + error.message, 'error');
+            }
+        }
+
+        function openReportTab(evt, tabName) {
+            console.log(`Opening report tab: ${tabName}`);
+            let i, tabcontent, tablinks;
+
+            tabcontent = document.getElementsByClassName("report-tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+                tabcontent[i].classList.remove('active');
+            }
+
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active-tab");
+            }
+
+            const targetTabContent = document.getElementById(tabName);
+            if (targetTabContent) {
+                targetTabContent.style.display = "block";
+                targetTabContent.style.visibility = "visible";
+                void targetTabContent.offsetWidth; // Trigger reflow
+                targetTabContent.classList.add('active');
+                targetTabContent.style.opacity = '1';
+            }
+
+            if (evt) {
+                evt.currentTarget.classList.add("active-tab");
+            } else {
+                const defaultTabButton = document.querySelector(`.tab-button[onclick*="${tabName}"]`);
+                if (defaultTabButton) {
+                    defaultTabButton.classList.add("active-tab");
+                }
+            }
+
+            showLoading();
+            try {
+                if (tabName === 'refill-history-tab') {
+                    loadRefillHistory();
+                } else if (tabName === 'usage-history-tab') {
+                    loadUsageHistory();
+                } else if (tabName === 'stock-report-tab') {
+                    loadCurrentStockReport();
+                }
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // --- Table Filtering Function ---
+        function filterTable(tableId, filterText) {
+            const tableBody = document.querySelector(`#${tableId} tbody`);
+            const rows = tableBody.querySelectorAll('tr');
+            const lowerCaseFilter = filterText.toLowerCase();
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                let rowMatches = false;
+                cells.forEach(cell => {
+                    if (cell.textContent.toLowerCase().includes(lowerCaseFilter)) {
+                        rowMatches = true;
+                    }
+                });
+                if (rowMatches) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // --- Theme Toggle Function ---
+        function toggleTheme() {
+            isDayMode = !isDayMode;
+            applyTheme();
+        }
+
+        function applyTheme() {
+            const body = document.body;
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const dynamicBg = document.querySelector('.dynamic-bg');
+            const sections = document.querySelectorAll('.section-content');
+            const forms = document.querySelectorAll('form');
+            const tables = document.querySelectorAll('.table-container');
+            const topNavbar = document.getElementById('top-navbar');
+            const sidebar = document.getElementById('sidebar');
+            const headers = document.querySelectorAll('h1, h2, h3');
+            const labels = document.querySelectorAll('label');
+            const inputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"], select');
+            const tableHeaders = document.querySelectorAll('.table-header th');
+            const tableRows = document.querySelectorAll('.table-row');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const messages = document.querySelectorAll('.text-gray-400, .text-gray-500, .text-gray-700'); // General text color
+            const estimatedCost = document.getElementById('estimatedCost');
+            const estimatedRefillTime = document.getElementById('estimatedRefillTime');
+            const skeletonLoaders = document.querySelectorAll('.skeleton-loader');
+            const dashboardCards = document.querySelectorAll('.dashboard-card');
+            const refillNeedsSummary = document.getElementById('refill-needs-summary');
+
+            // Remove existing theme classes
+            body.classList.remove('light', 'dark');
+
+            if (isDayMode) {
+                body.classList.add('light');
+                body.style.backgroundColor = '#f0f2f5';
+                body.style.color = '#333';
+                dynamicBg.style.backgroundColor = '#f0f2f5';
+                dynamicBg.style.backgroundImage = 'radial-gradient(circle at 100% 150%, #e0e6ed, #f0f2f5 50%, #f0f2f5)';
+
+                themeToggleBtn.classList.add('day-mode-active');
+                themeToggleBtn.classList.remove('night-mode-active');
+                themeToggleBtn.querySelector('.fa-solid').className = 'fa-solid fa-moon';
+
+                sidebar.style.backgroundColor = '#2c3e50';
+                sidebar.style.color = '#ecf0f1';
+                sidebar.style.boxShadow = '4px 0 15px rgba(0, 0, 0, 0.25)';
+                sidebar.querySelector('.logo').style.color = '#ffffff';
+                sidebar.querySelector('.logo .icon').style.color = '#27ae60';
+                sidebar.querySelectorAll('.nav-group-title').forEach(el => el.style.color = '#bdc3c7');
+                sidebar.querySelectorAll('.nav-item').forEach(el => {
+                    el.style.color = '#ecf0f1';
+                    el.style.backgroundColor = 'transparent';
+                    el.style.borderLeftColor = 'transparent';
+                });
+                sidebar.querySelectorAll('.nav-item.active').forEach(el => {
+                    el.style.backgroundColor = '#34495e';
+                    el.style.borderLeftColor = '#27ae60';
+                });
+                sidebar.querySelectorAll('.nav-item:hover').forEach(el => {
+                    el.style.backgroundColor = '#34495e';
+                    el.style.borderLeftColor = '#27ae60';
+                });
+
+
+                topNavbar.style.backgroundColor = '#ffffff';
+                topNavbar.style.borderBottomColor = '#e0e6ed';
+                topNavbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.08)';
+                topNavbar.querySelector('.title').style.color = '#333';
+                topNavbar.querySelector('.profile-icon').style.color = '#7f8c8d';
+                document.getElementById('mobile-menu-button').style.backgroundColor = '#2c3e50';
+                document.getElementById('mobile-menu-button').style.color = '#ecf0f1';
+                document.getElementById('mobile-menu-button').style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+
+
+                sections.forEach(el => {
+                    el.style.backgroundColor = '#ffffff';
+                    el.style.boxShadow = '0 6px 15px rgba(0, 0, 0, 0.08)';
+                });
+                forms.forEach(el => {
+                    el.style.backgroundColor = '#ffffff';
+                    el.style.borderColor = '#e0e6ed';
+                    el.style.boxShadow = 'none'; /* Forms within sections don't need extra shadow */
+                });
+                tables.forEach(el => {
+                    el.style.backgroundColor = '#ffffff';
+                    el.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.06)';
+                    el.style.borderColor = '#e0e6ed';
+                });
+                
+                headers.forEach(el => el.style.color = '#27ae60');
+                labels.forEach(el => el.style.color = '#555');
+                inputs.forEach(el => {
+                    el.style.backgroundColor = '#f9f9f9';
+                    el.style.borderColor = '#ccc';
+                    el.style.color = '#333';
+                });
+                document.querySelectorAll('input[readonly]').forEach(el => {
+                    el.style.backgroundColor = '#e9ecef';
+                    el.style.color = '#666';
+                });
+                tableHeaders.forEach(el => {
+                    el.style.backgroundColor = '#ecf0f1';
+                    el.style.color = '#333';
+                    el.style.borderBottomColor = '#bdc3c7';
+                });
+                tableRows.forEach((el, index) => {
+                    el.style.borderBottomColor = '#e0e6ed';
+                    el.style.backgroundColor = index % 2 === 0 ? '#fcfcfc' : '#ffffff';
+                });
+                document.querySelectorAll('.table-row:hover').forEach(el => el.style.backgroundColor = '#f5f7f9');
+                document.querySelectorAll('.table-row.selected-row').forEach(el => el.style.backgroundColor = '#dbeafe');
+
+                tabButtons.forEach(el => {
+                    el.style.color = '#7f8c8d';
+                    el.style.borderColor = 'transparent';
+                });
+                document.querySelector('.tab-button.active-tab').style.color = '#27ae60';
+                document.querySelector('.tab-button.active-tab').style.borderColor = '#27ae60';
+
+                messages.forEach(el => el.style.color = '#666');
+                if (estimatedCost) estimatedCost.style.color = '#2e86de'; // Blue for cost in day mode
+                if (estimatedRefillTime) estimatedRefillTime.style.color = '#2e86de';
+                
+                skeletonLoaders.forEach(el => el.style.backgroundColor = '#e0e6ed');
+
+                dashboardCards.forEach(card => {
+                    card.style.backgroundColor = '#ffffff';
+                    card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                    card.querySelector('.dashboard-card-title').style.color = '#666';
+                    card.querySelector('.dashboard-card-value').style.color = '#333';
+                });
+                if (refillNeedsSummary) {
+                    refillNeedsSummary.style.backgroundColor = '#e6ffed';
+                    refillNeedsSummary.style.borderColor = '#b2f0c7';
+                }
+
+            } else { /* Night Mode */
+                body.classList.add('dark');
+                body.style.backgroundColor = '#1a202c';
+                body.style.color = '#e2e8f0';
+                dynamicBg.style.backgroundColor = '#1a202c';
+                dynamicBg.style.backgroundImage = 'radial-gradient(circle at 100% 150%, #2d3748, #1a202c 50%, #1a202c)';
+
+                themeToggleBtn.classList.remove('day-mode-active');
+                themeToggleBtn.classList.add('night-mode-active');
+                themeToggleBtn.querySelector('.fa-solid').className = 'fa-solid fa-sun';
+
+                sidebar.style.backgroundColor = '#1f2937';
+                sidebar.style.color = '#d1d5db';
+                sidebar.style.boxShadow = '4px 0 15px rgba(0, 0, 0, 0.5)';
+                sidebar.querySelector('.logo').style.color = '#f9fafb';
+                sidebar.querySelector('.logo .icon').style.color = '#f39c12'; /* Amber for dark mode logo */
+                sidebar.querySelectorAll('.nav-group-title').forEach(el => el.style.color = '#9ca3af');
+                sidebar.querySelectorAll('.nav-item').forEach(el => {
+                    el.style.color = '#d1d5db';
+                    el.style.backgroundColor = 'transparent';
+                    el.style.borderLeftColor = 'transparent';
+                });
+                sidebar.querySelectorAll('.nav-item.active').forEach(el => {
+                    el.style.backgroundColor = '#374151';
+                    el.style.borderLeftColor = '#f39c12'; /* Amber for dark mode active */
+                });
+                sidebar.querySelectorAll('.nav-item:hover').forEach(el => {
+                    el.style.backgroundColor = '#374151';
+                    el.style.borderLeftColor = '#f39c12';
+                });
+
+
+                topNavbar.style.backgroundColor = '#1f2937';
+                topNavbar.style.borderBottomColor = '#374151';
+                topNavbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.3)';
+                topNavbar.querySelector('.title').style.color = '#e2e8f0';
+                topNavbar.querySelector('.profile-icon').style.color = '#a0aec0';
+                document.getElementById('mobile-menu-button').style.backgroundColor = '#1f2937';
+                document.getElementById('mobile-menu-button').style.color = '#e2e8f0';
+                document.getElementById('mobile-menu-button').style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
+
+
+                sections.forEach(el => {
+                    el.style.backgroundColor = '#2d3748';
+                    el.style.boxShadow = '0 6px 15px rgba(0, 0, 0, 0.4)';
+                });
+                forms.forEach(el => {
+                    el.style.backgroundColor = '#2d3748';
+                    el.style.borderColor = '#4a5568';
+                    el.style.boxShadow = 'none';
+                });
+                tables.forEach(el => {
+                    el.style.backgroundColor = '#2d3748';
+                    el.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                    el.style.borderColor = '#4a5568';
+                });
+
+                headers.forEach(el => el.style.color = '#f39c12'); /* Amber for headers in dark mode */
+                labels.forEach(el => el.style.color = '#e2e8f0');
+                inputs.forEach(el => {
+                    el.style.backgroundColor = '#4a5568';
+                    el.style.borderColor = '#667080';
+                    el.style.color = '#e2e8f0';
+                });
+                document.querySelectorAll('input[readonly]').forEach(el => {
+                    el.style.backgroundColor = '#374151';
+                    el.style.color = '#a0aec0';
+                });
+                tableHeaders.forEach(el => {
+                    el.style.backgroundColor = '#4a5568';
+                    el.style.color = '#e2e8f0';
+                    el.style.borderBottomColor = '#667080';
+                });
+                tableRows.forEach((el, index) => {
+                    el.style.borderBottomColor = '#4a5568';
+                    el.style.backgroundColor = index % 2 === 0 ? '#2d3748' : '#374151';
+                });
+                document.querySelectorAll('.table-row:hover').forEach(el => el.style.backgroundColor = '#3a475a');
+                document.querySelectorAll('.table-row.selected-row').forEach(el => el.style.backgroundColor = '#4a5568');
+
+                tabButtons.forEach(el => {
+                    el.style.color = '#a0aec0';
+                    el.style.borderColor = 'transparent';
+                });
+                document.querySelector('.tab-button.active-tab').style.color = '#f39c12';
+                document.querySelector('.tab-button.active-tab').style.borderColor = '#f39c12';
+
+                messages.forEach(el => el.style.color = '#a0aec0');
+                if (estimatedCost) estimatedCost.style.color = '#f39c12'; /* Amber for cost in dark mode */
+                if (estimatedRefillTime) estimatedRefillTime.style.color = '#f39c12';
+
+                skeletonLoaders.forEach(el => el.style.backgroundColor = '#4a5568');
+
+                dashboardCards.forEach(card => {
+                    card.style.backgroundColor = '#2d3748';
+                    card.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                    card.querySelector('.dashboard-card-title').style.color = '#a0aec0';
+                    card.querySelector('.dashboard-card-value').style.color = '#e2e8f0';
+                });
+                if (refillNeedsSummary) {
+                    refillNeedsSummary.style.backgroundColor = '#2d3748';
+                    refillNeedsSummary.style.borderColor = '#4a5568';
+                }
+            }
+        }
+
+        // --- Dashboard Analytics Functions ---
+        function updateUsageRefillTrends() {
+            const period = document.getElementById('trendPeriodSelect').value;
+            let totalUsage = 0;
+            let totalRefill = 0;
+
+            const now = new Date();
+            let startDate;
+
+            if (period === 'weekly') {
+                startDate = new Date(now.setDate(now.getDate() - 7));
+            } else if (period === 'monthly') {
+                startDate = new Date(now.setMonth(now.getMonth() - 1));
+            } else if (period === 'yearly') {
+                startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+            }
+
+            usageHistory.forEach(usage => {
+                const usageDate = new Date(usage.UsageDate);
+                if (usageDate >= startDate) {
+                    totalUsage += usage.Quantity;
+                }
+            });
+
+            refillHistory.forEach(refill => {
+                const refillDate = new Date(refill.RefillDate);
+                if (refillDate >= startDate) {
+                    totalRefill += refill.Quantity;
+                }
+            });
+
+            document.getElementById('trend-total-usage').textContent = totalUsage.toFixed(2);
+            document.getElementById('trend-total-refill').textContent = totalRefill.toFixed(2);
+        }
+
+        function updateSupplierPerformance() {
+            const supplierId = document.getElementById('supplierPerformanceSelect').value;
+            let totalQuantity = 0;
+            let totalCost = 0;
+
+            refillHistory.forEach(refill => {
+                if (supplierId === '' || refill.SupplierID === parseInt(supplierId)) {
+                    totalQuantity += refill.Quantity;
+                    totalCost += refill.TotalCost;
+                }
+            });
+
+            document.getElementById('supplier-total-quantity').textContent = totalQuantity.toFixed(2);
+            document.getElementById('supplier-total-cost').textContent = totalCost.toFixed(2);
+        }
+
+        // --- Report Export Functions ---
+        function exportTableToPdf(tableId, filename) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape'); // 'landscape' for wider tables
+
+            const table = document.getElementById(tableId);
+            const headers = Array.from(table.querySelector('thead tr').children).map(th => th.textContent.trim());
+            const data = Array.from(table.querySelector('tbody').children).map(row => 
+                Array.from(row.children).map(cell => cell.textContent.trim())
+            );
+
+            doc.autoTable({
+                head: [headers],
+                body: data,
+                startY: 20,
+                styles: {
+                    font: 'Pyidaungsu', // Use Burmese font if available in jsPDF
+                    fontSize: 8,
+                    cellPadding: 3,
+                    halign: 'left',
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [39, 174, 96], // Emerald green
+                    textColor: 255,
+                    fontStyle: 'bold'
+                },
+                alternateRowStyles: {
+                    fillColor: [240, 242, 245]
+                },
+                theme: 'striped'
+            });
+
+            doc.save(`${filename}.pdf`);
+            showMessage('အောင်မြင်ပါသည်', 'PDF Report အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။', 'success');
+        }
+
+        function exportTableToExcel(tableId, filename) {
+            const table = document.getElementById(tableId);
+            const ws = XLSX.utils.table_to_sheet(table);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+            showMessage('အောင်မြင်ပါသည်', 'Excel Report အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။', 'success');
+        }
+
+        // Initial load: show the first section and load its data
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Auto-detect OS theme preference
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                isDayMode = false; // Set to dark mode initially
+            } else {
+                isDayMode = true; // Set to light mode initially
+            }
+            applyTheme(); // Apply the detected theme
+
+            // Load initial data for dropdowns and tables
+            showLoading(); // Show loading indicator at startup
+            try {
+                fuelTypes = await callApi('/fueltypes');
+                sites = await callApi('/sites');
+                suppliers = await callApi('/suppliers');
+                fuelPrices = await callApi('/fuelprices');
+                siteStocks = await callApi('/fuelstock');
+                refillHistory = await callApi('/refillhistory');
+                usageHistory = await callApi('/usagehistory');
+
+            } catch (error) {
+                console.error("Initial data load failed:", error);
+                showMessage("အမှား", "စနစ်စတင်ရာတွင် အချက်အလက်များ တင်ရာတွင် အမှားအယွင်းရှိခဲ့ပါသည်။\n" + error.message, "error");
+            } finally {
+                hideLoading(); // Hide loading indicator after initial load
+            }
+
+            // Default to Dashboard section
+            showSection('dashboard-section', document.querySelector('#sidebar .nav-item[onclick*="dashboard-section"]'));
+
+            // Add hover functionality for sidebar on desktop
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) { // Only enable on desktop
+                sidebar.classList.add('collapsed'); // Start collapsed on desktop
+                sidebar.addEventListener('mouseenter', () => {
+                    sidebar.classList.remove('collapsed');
+                });
+                sidebar.addEventListener('mouseleave', () => {
+                    sidebar.classList.add('collapsed');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
